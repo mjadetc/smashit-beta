@@ -112,4 +112,99 @@ class UserRepositoryTest {
                 () -> userRepository.saveAndFlush(secondUser)
         );
     }
+
+
+        @Test
+        void shouldFindUserByUsernameIgnoringCase() {
+
+        // Generate a unique username to avoid conflicts with other tests.
+        String username = "player_" + UUID.randomUUID()
+                .toString().substring(0, 8);
+
+        // Create a test user using the updated User constructor.
+        User user = new User(
+                "Test",                 // firstName
+                "Player",               // lastName
+                username,               // username
+                username + "@example.com",
+                "test-hash"
+        );
+
+        // Save the user to the test database.
+        userRepository.saveAndFlush(user);
+
+        // Search using uppercase to verify case-insensitive lookup.
+        var result = userRepository.findByUsernameIgnoreCase(
+                username.toUpperCase()
+        );
+
+        assertTrue(result.isPresent());
+        assertEquals(username, result.get().getUserName());
+        }
+
+        @Test
+        void shouldCheckIfUsernameExistsIgnoringCase() {
+
+        // Create a unique username for this test.
+        String username = "exists_" + UUID.randomUUID()
+                .toString().substring(0, 8);
+
+        User user = new User(
+                "Test",
+                "Player",
+                username,
+                username + "@example.com",
+                "test-hash"
+        );
+
+        userRepository.saveAndFlush(user);
+
+        // Verify that username existence checks ignore letter casing.
+        assertTrue(
+                userRepository.existsByUsernameIgnoreCase(
+                        username.toUpperCase()
+                )
+        );
+
+        // Verify that a nonexistent username returns false.
+        assertFalse(
+                userRepository.existsByUsernameIgnoreCase(
+                        "unknown_" + UUID.randomUUID()
+                )
+        );
+        }
+
+        @Test
+        void shouldRejectDuplicateUsernameIgnoringCase() {
+
+        // Both usernames are the same except for letter casing.
+        String username = "duplicate_" + UUID.randomUUID()
+                .toString().substring(0, 8);
+
+        User firstUser = new User(
+                "First",
+                "Player",
+                username,
+                "first_" + username + "@example.com",
+                "test-hash"
+        );
+
+        User secondUser = new User(
+                "Second",
+                "Player",
+                username.toUpperCase(),
+                "second_" + username + "@example.com",
+                "test-hash"
+        );
+
+        // Save the first user.
+        userRepository.saveAndFlush(firstUser);
+
+        // The database unique index should reject the second user.
+        assertThrows(
+                DataIntegrityViolationException.class,
+                () -> userRepository.saveAndFlush(secondUser)
+        );
+        }
+
 }
