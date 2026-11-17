@@ -6,6 +6,7 @@ import com.smashit_beta.backend.dto.response.UserResponse;
 import com.smashit_beta.backend.entity.User;
 import com.smashit_beta.backend.exception.EmailAlreadyRegisteredException;
 import com.smashit_beta.backend.exception.UsernameAlreadyRegisteredException;
+import com.smashit_beta.backend.exception.ResourceNotFoundException;
 import com.smashit_beta.backend.repository.UserRepository;
 
 import org.springframework.security.crypto.password.PasswordEncoder;
@@ -82,13 +83,17 @@ public class UserService {
         User savedUser = userRepository.save(user);
 
         // Convert the entity into a safe response DTO.
-        return new UserResponse(
-                savedUser.getId(),
-                savedUser.getFirstName(),
-                savedUser.getLastName(),
-                savedUser.getUsername(),
-                savedUser.getEmail(),
-                savedUser.getCreatedAt()
-        );
+        return UserResponse.from(savedUser);
+    }
+
+    // Look up the logged-in user's public profile by their email.
+    // readOnly = true tells Hibernate it doesn't need to track changes (a small speed-up).
+    @Transactional(readOnly = true)
+    public UserResponse getByEmail(String email) {
+        return userRepository.findByEmailIgnoreCase(email.trim())
+                // Optional.map: if a User was found, convert it to UserResponse.
+                .map(UserResponse::from)
+                // If the Optional is empty, throw -> GlobalExceptionHandler returns 404.
+                .orElseThrow(() -> new ResourceNotFoundException("User not found."));
     }
 }

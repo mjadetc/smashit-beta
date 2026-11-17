@@ -1,13 +1,15 @@
 
 package com.smashit_beta.backend.service;
 
+import java.util.Optional;
+
 import com.smashit_beta.backend.dto.request.RegisterRequest;
 import com.smashit_beta.backend.dto.response.UserResponse;
 import com.smashit_beta.backend.entity.User;
 import com.smashit_beta.backend.exception.EmailAlreadyRegisteredException;
 import com.smashit_beta.backend.exception.UsernameAlreadyRegisteredException;
 import com.smashit_beta.backend.repository.UserRepository;
-
+import com.smashit_beta.backend.exception.ResourceNotFoundException;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 
@@ -207,5 +209,42 @@ class UserServiceTest {
 
         verifyNoInteractions(userRepository);
         verifyNoInteractions(passwordEncoder);
+    }
+
+        @Test
+    void shouldReturnUserByEmail() {
+
+        // Arrange: a user that the (fake) repository will "find".
+        User user = new User(
+                "Test",
+                "Player",
+                "PlayerOne",
+                "player@example.com",
+                "bcrypt-test-hash"
+        );
+
+        // Whitespace is trimmed before the lookup.
+        when(userRepository.findByEmailIgnoreCase("player@example.com"))
+                .thenReturn(Optional.of(user));
+
+        // Act
+        UserResponse response = userService.getByEmail("  player@example.com  ");
+
+        // Assert: the public fields are copied into the response.
+        assertEquals("PlayerOne", response.username());
+        assertEquals("player@example.com", response.email());
+    }
+
+    @Test
+    void shouldThrowWhenUserEmailNotFound() {
+
+        // Optional.empty() simulates "no row in the database".
+        when(userRepository.findByEmailIgnoreCase("missing@example.com"))
+                .thenReturn(Optional.empty());
+
+        assertThrows(
+                ResourceNotFoundException.class,
+                () -> userService.getByEmail("missing@example.com")
+        );
     }
 }
