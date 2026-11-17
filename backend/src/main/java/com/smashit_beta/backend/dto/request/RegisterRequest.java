@@ -14,9 +14,9 @@ public record RegisterRequest(
         @Size(max = 80, message = "Display name must not exceed 255 characters.")
         String lastName,
 
-        @NotBlank(message = "Display name is required.")
-        @Size(max = 80, message = "Display name must not exceed 80 characters.")
-        String userName,
+        @NotBlank(message = "Username is required.")
+        @Size(max = 80, message = "Username must not exceed 80 characters.")
+        String username,
 
         @NotBlank(message = "Email is required.")
         @Email(message = "Please provide a valid email address.")

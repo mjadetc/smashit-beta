@@ -5,6 +5,7 @@ import com.smashit_beta.backend.dto.request.RegisterRequest;
 import com.smashit_beta.backend.dto.response.UserResponse;
 import com.smashit_beta.backend.entity.User;
 import com.smashit_beta.backend.exception.EmailAlreadyRegisteredException;
+import com.smashit_beta.backend.exception.UsernameAlreadyRegisteredException;
 import com.smashit_beta.backend.repository.UserRepository;
 
 import org.springframework.security.crypto.password.PasswordEncoder;
@@ -35,7 +36,7 @@ public class UserService {
                 .trim()
                 .toLowerCase(Locale.ROOT);
 
-        String normalizedUserName = request.userName().trim();
+        String normalizedUsername = request.username().trim();
         String normalizedFirstName = request.firstName().trim();
         String normalizedLastName = request.lastName().trim();
 
@@ -58,6 +59,13 @@ public class UserService {
             );
         }
 
+        // Reject registration if the username is already in use.
+        if (userRepository.existsByUsernameIgnoreCase(normalizedUsername)) {
+            throw new UsernameAlreadyRegisteredException(
+                    "This username is already taken."
+            );
+        }
+
         // Hash the password before saving it.
         String passwordHash = passwordEncoder.encode(rawPassword);
 
@@ -65,7 +73,7 @@ public class UserService {
         User user = new User(
                 normalizedFirstName,
                 normalizedLastName,
-                normalizedUserName,
+                normalizedUsername,
                 normalizedEmail,
                 passwordHash
         );
@@ -78,7 +86,7 @@ public class UserService {
                 savedUser.getId(),
                 savedUser.getFirstName(),
                 savedUser.getLastName(),
-                savedUser.getUserName(),
+                savedUser.getUsername(),
                 savedUser.getEmail(),
                 savedUser.getCreatedAt()
         );

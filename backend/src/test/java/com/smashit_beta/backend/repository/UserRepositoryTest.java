@@ -34,7 +34,7 @@ class UserRepositoryTest {
         User savedUser = userRepository.saveAndFlush(user);
 
         assertNotNull(savedUser.getId());
-        assertEquals("Test Player", savedUser.getUserName());
+        assertEquals("Test Player", savedUser.getUsername());
         assertEquals("testplayer@example.com", savedUser.getEmail());
         assertNotNull(savedUser.getCreatedAt());
         assertNotNull(savedUser.getUpdatedAt());
@@ -125,7 +125,7 @@ class UserRepositoryTest {
         User user = new User(
                 "Test",                 // firstName
                 "Player",               // lastName
-                username,               // username
+                username,                       // username
                 username + "@example.com",
                 "test-hash"
         );
@@ -139,7 +139,7 @@ class UserRepositoryTest {
         );
 
         assertTrue(result.isPresent());
-        assertEquals(username, result.get().getUserName());
+        assertEquals(username, result.get().getUsername());
         }
 
         @Test
