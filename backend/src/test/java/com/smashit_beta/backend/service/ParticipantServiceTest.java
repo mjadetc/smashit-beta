@@ -10,6 +10,7 @@ import com.smashit_beta.backend.exception.DuplicateResourceException;
 import com.smashit_beta.backend.exception.InvalidStateException;
 import com.smashit_beta.backend.exception.ResourceNotFoundException;
 import com.smashit_beta.backend.repository.EventParticipantRepository;
+import com.smashit_beta.backend.repository.MatchPlayerRepository;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -32,6 +33,7 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
+import static org.mockito.ArgumentMatchers.eq;
 
 // UNIT tests for ParticipantService. Both dependencies are Mockito fakes:
 // EventService (for "load my event") and the participant repository.
@@ -46,6 +48,11 @@ class ParticipantServiceTest {
 
     @Mock
     private EventParticipantRepository participantRepository;
+
+    // NEW: ParticipantService now also needs this. Without a @Mock here,
+    // @InjectMocks would pass null and remove() would crash.
+    @Mock
+    private MatchPlayerRepository matchPlayerRepository;
 
     @InjectMocks
     private ParticipantService participantService;
@@ -170,6 +177,22 @@ class ParticipantServiceTest {
         // The row isn't deleted, just marked inactive.
         assertFalse(juan.isActive());
         verify(participantRepository, never()).delete(any());
+    }
+
+    @Test
+    void shouldNotRemoveParticipantWhoIsInAnUnfinishedMatch() {
+        givenOwnedEvent();
+        EventParticipant juan = participant(10L, "Juan");
+        when(participantRepository.findByIdAndEventId(10L, EVENT_ID)).thenReturn(Optional.of(juan));
+        // any() = "whatever list of statuses is passed in".
+        when(matchPlayerRepository.existsByParticipantIdAndMatchStatusIn(eq(10L), any()))
+                .thenReturn(true);
+
+        assertThrows(InvalidStateException.class,
+                () -> participantService.remove(EMAIL, EVENT_ID, 10L));
+
+        // Still active: nothing was changed.
+        assertTrue(juan.isActive());
     }
 
     @Test
