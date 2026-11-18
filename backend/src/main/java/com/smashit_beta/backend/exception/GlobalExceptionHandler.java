@@ -8,6 +8,8 @@ import org.springframework.validation.FieldError;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
+import org.springframework.http.converter.HttpMessageNotReadableException;
+import org.springframework.web.method.annotation.MethodArgumentTypeMismatchException;
 
 import java.util.LinkedHashMap;
 import java.util.Map;
@@ -64,10 +66,37 @@ public class GlobalExceptionHandler {
         return problem;
     }
 
+    // The request body couldn't be read: broken JSON, or a value of the wrong type,
+    // e.g. "matchFormat": "BEST_OF_FIVE" or "startsAt": "tomorrow" -> 400 Bad Request.
+    @ExceptionHandler(HttpMessageNotReadableException.class)
+    public ProblemDetail handleUnreadableBody(HttpMessageNotReadableException ex) {
+        return ProblemDetail.forStatusAndDetail(
+                HttpStatus.BAD_REQUEST,
+                "The request body is malformed or contains an invalid value."
+        );
+    }
+
     // Business-rule violations thrown by our services, e.g. the 72-byte password check.
     @ExceptionHandler(IllegalArgumentException.class)
     public ProblemDetail handleIllegalArgument(IllegalArgumentException ex) {
         return ProblemDetail.forStatusAndDetail(HttpStatus.BAD_REQUEST, ex.getMessage());
+    }
+
+    // The action isn't allowed in the current state
+    // (e.g. editing a completed event) -> 409 Conflict.
+    @ExceptionHandler(InvalidStateException.class)
+    public ProblemDetail handleInvalidState(InvalidStateException ex) {
+        return ProblemDetail.forStatusAndDetail(HttpStatus.CONFLICT, ex.getMessage());
+    }
+
+    // A URL value couldn't be converted to the expected type,
+    // e.g. /api/events?status=FINISHED or /api/events/abc -> 400 Bad Request.
+    @ExceptionHandler(MethodArgumentTypeMismatchException.class)
+    public ProblemDetail handleTypeMismatch(MethodArgumentTypeMismatchException ex) {
+        return ProblemDetail.forStatusAndDetail(
+                HttpStatus.BAD_REQUEST,
+                "Invalid value for '" + ex.getName() + "'."
+        );
     }
 
     // Something requested doesn't exist -> 404 Not Found.
