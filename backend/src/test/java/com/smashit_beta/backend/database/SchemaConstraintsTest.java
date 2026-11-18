@@ -15,7 +15,7 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 
-// Checks that the Flyway migrations (V4-V8) created tables whose constraints
+// Checks that the Flyway migrations (V4-V10) created tables whose constraints
 // really protect the data. We have no entities for these tables yet, so we talk to
 // PostgreSQL with plain SQL through JdbcTemplate (Spring's helper for running SQL).
 //
@@ -74,19 +74,20 @@ class SchemaConstraintsTest {
         );
     }
 
-    private Long insertRound(Long eventId, int roundNumber) {
-        return jdbcTemplate.queryForObject(
-                "INSERT INTO rounds (event_id, round_number) VALUES (?, ?) RETURNING id",
-                Long.class,
-                eventId, roundNumber
-        );
-    }
+    // private Long insertRound(Long eventId, int roundNumber) {
+    //     return jdbcTemplate.queryForObject(
+    //             "INSERT INTO rounds (event_id, round_number) VALUES (?, ?) RETURNING id",
+    //             Long.class,
+    //             eventId, roundNumber
+    //     );
+    // }
 
-    private Long insertMatch(Long roundId, int courtNumber) {
+    // CHANGED (V10): a match now belongs directly to its event. New matches start SCHEDULED.
+    private Long insertMatch(Long eventId, int courtNumber) {
         return jdbcTemplate.queryForObject(
-                "INSERT INTO matches (round_id, court_number) VALUES (?, ?) RETURNING id",
+                "INSERT INTO matches (event_id, court_number) VALUES (?, ?) RETURNING id",
                 Long.class,
-                roundId, courtNumber
+                eventId, courtNumber
         );
     }
 
@@ -163,7 +164,7 @@ class SchemaConstraintsTest {
     void shouldBlockHardDeletingParticipantWhoPlayedAMatch() {
         Long eventId = insertEvent("SINGLE_GAME", null);
         Long participantId = insertParticipant(eventId, "Maria");
-        Long matchId = insertMatch(insertRound(eventId, 1), 1);
+        Long matchId = insertMatch(eventId, 1);
         insertMatchPlayer(matchId, participantId, "A");
 
         // The foreign key is DEFERRED (checked at commit), but this test rolls back
@@ -176,20 +177,31 @@ class SchemaConstraintsTest {
         ));
     }
 
-    // ---------- rounds and matches ----------
+    // ---------- matches ----------
 
+    // CHANGED (V10): the partial unique index allows only ONE unfinished match per court.
     @Test
-    void shouldRejectTwoMatchesOnSameCourtInSameRound() {
-        Long roundId = insertRound(insertEvent("SINGLE_GAME", null), 1);
-        insertMatch(roundId, 1);
+    void shouldRejectTwoUnfinishedMatchesOnSameCourt() {
+        Long eventId = insertEvent("SINGLE_GAME", null);
+        insertMatch(eventId, 1);
 
         assertThrows(DataIntegrityViolationException.class,
-                () -> insertMatch(roundId, 1));
+                () -> insertMatch(eventId, 1));
+    }
+
+    // NEW (V10): once a court's match is cancelled (or completed), the court can be used again.
+    @Test
+    void shouldAllowNewMatchOnCourtAfterPreviousOneIsCancelled() {
+        Long eventId = insertEvent("SINGLE_GAME", null);
+        Long firstMatch = insertMatch(eventId, 1);
+        jdbcTemplate.update("UPDATE matches SET status = 'CANCELLED' WHERE id = ?", firstMatch);
+
+        assertNotNull(insertMatch(eventId, 1));
     }
 
     @Test
     void shouldRejectCompletedMatchWithoutWinner() {
-        Long matchId = insertMatch(insertRound(insertEvent("SINGLE_GAME", null), 1), 1);
+        Long matchId = insertMatch(insertEvent("SINGLE_GAME", null), 1);
 
         assertThrows(DataIntegrityViolationException.class, () -> jdbcTemplate.update(
                 "UPDATE matches SET status = 'COMPLETED' WHERE id = ?", matchId
@@ -216,10 +228,10 @@ class SchemaConstraintsTest {
 
     @Test
     void shouldDeleteEverythingWhenEventIsDeleted() {
-        // Build a small but complete event: participant, round, match, player, expense.
+        // Build a small but complete event: participant, match, player, expense.
         Long eventId = insertEvent("SINGLE_GAME", null);
         Long participantId = insertParticipant(eventId, "Leo");
-        Long matchId = insertMatch(insertRound(eventId, 1), 1);
+        Long matchId = insertMatch(eventId, 1);
         insertMatchPlayer(matchId, participantId, "A");
         jdbcTemplate.update(
                 """
@@ -237,7 +249,7 @@ class SchemaConstraintsTest {
 
         // ON DELETE CASCADE removed every row that belonged to the event.
         assertEquals(0, count("SELECT COUNT(*) FROM event_participants WHERE event_id = ?", eventId));
-        assertEquals(0, count("SELECT COUNT(*) FROM rounds WHERE event_id = ?", eventId));
+        assertEquals(0, count("SELECT COUNT(*) FROM matches WHERE event_id = ?", eventId));
         assertEquals(0, count("SELECT COUNT(*) FROM expenses WHERE event_id = ?", eventId));
         assertEquals(0, count("SELECT COUNT(*) FROM match_players WHERE match_id = ?", matchId));
     }

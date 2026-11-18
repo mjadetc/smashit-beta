@@ -140,7 +140,7 @@ public class EventService {
         return EventResponse.from(event);
     }
 
-    // FR-008: delete an event. Its participants, rounds, matches and expenses are
+    // FR-008: delete an event. Its participants, matches and expenses are
     // removed too by ON DELETE CASCADE in the database. Asking "are you sure?" is
     // the frontend's job.
     @Transactional

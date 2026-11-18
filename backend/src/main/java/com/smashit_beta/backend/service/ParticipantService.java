@@ -8,6 +8,8 @@ import com.smashit_beta.backend.exception.DuplicateResourceException;
 import com.smashit_beta.backend.exception.InvalidStateException;
 import com.smashit_beta.backend.exception.ResourceNotFoundException;
 import com.smashit_beta.backend.repository.EventParticipantRepository;
+import com.smashit_beta.backend.entity.MatchStatus;
+import com.smashit_beta.backend.repository.MatchPlayerRepository;
 
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -24,14 +26,18 @@ public class ParticipantService {
 
     private final EventService eventService;
     private final EventParticipantRepository participantRepository;
+    // To check whether a participant is on court right now.
+    private final MatchPlayerRepository matchPlayerRepository;
 
-    // A service can depend on another service; Spring injects both.
+    // A service can depend on another service; Spring injects all three.
     public ParticipantService(
             EventService eventService,
-            EventParticipantRepository participantRepository
+            EventParticipantRepository participantRepository,
+            MatchPlayerRepository matchPlayerRepository
     ) {
         this.eventService = eventService;
         this.participantRepository = participantRepository;
+        this.matchPlayerRepository = matchPlayerRepository;
     }
 
     // List the event's current participants. Allowed for any event status,
@@ -115,6 +121,16 @@ public class ParticipantService {
         requireActiveEvent(event);
 
         EventParticipant participant = findActiveParticipant(event, participantId);
+
+        // Someone in a scheduled or in-progress match can't just disappear.
+        // (Completed and cancelled matches don't block this: their history stays.)
+        if (matchPlayerRepository.existsByParticipantIdAndMatchStatusIn(
+                participant.getId(), List.of(MatchStatus.SCHEDULED, MatchStatus.IN_PROGRESS))) {
+            throw new InvalidStateException(
+                    "\"" + participant.getPlayerName() + "\" is in a match that hasn't finished. "
+                            + "Change that match's line-up or cancel it first.");
+        }
+
         participant.remove();
     }
 
