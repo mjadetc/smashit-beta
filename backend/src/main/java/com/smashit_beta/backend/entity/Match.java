@@ -101,6 +101,17 @@ public class Match {
         this.status = MatchStatus.CANCELLED;
     }
 
+    // IN_PROGRESS -> COMPLETED with a winner (FR-032, FR-033).
+    // From now on the match counts for matchmaking fairness, and its court is free.
+    public void complete(Team winner) {
+        if (status != MatchStatus.IN_PROGRESS) {
+            throw new InvalidStateException("Only a match in progress can be completed.");
+        }
+        this.status = MatchStatus.COMPLETED;
+        this.winningTeam = winner;
+        this.completedAt = Instant.now();
+    }
+
     // "Open" = not finished yet: it occupies its court and its 4 players.
     public boolean isOpen() {
         return status == MatchStatus.SCHEDULED || status == MatchStatus.IN_PROGRESS;
