@@ -241,4 +241,35 @@ class SchemaConstraintsTest {
         assertEquals(0, count("SELECT COUNT(*) FROM expenses WHERE event_id = ?", eventId));
         assertEquals(0, count("SELECT COUNT(*) FROM match_players WHERE match_id = ?", matchId));
     }
+
+    @Test
+    void shouldDefaultNewEventsToActive() {
+        Long eventId = insertEvent("SINGLE_GAME", null);
+
+        String status = jdbcTemplate.queryForObject(
+                "SELECT status FROM events WHERE id = ?", String.class, eventId);
+
+        assertEquals("ACTIVE", status);
+    }
+
+    @Test
+    void shouldAllowCompletedAndCancelledStatus() {
+        Long eventId = insertEvent("SINGLE_GAME", null);
+
+        // update() returns how many rows changed.
+        assertEquals(1, jdbcTemplate.update(
+                "UPDATE events SET status = 'COMPLETED' WHERE id = ?", eventId));
+        assertEquals(1, jdbcTemplate.update(
+                "UPDATE events SET status = 'CANCELLED' WHERE id = ?", eventId));
+    }
+
+    @Test
+    void shouldRejectUnknownEventStatus() {
+        Long eventId = insertEvent("SINGLE_GAME", null);
+
+        // REMOVED is not a status: removed events are deleted instead.
+        assertThrows(DataIntegrityViolationException.class, () -> jdbcTemplate.update(
+                "UPDATE events SET status = 'REMOVED' WHERE id = ?", eventId
+        ));
+    }
 }
