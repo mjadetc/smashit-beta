@@ -173,7 +173,9 @@ public class EventService {
     // Loads an event ONLY if it belongs to this organizer.
     // Someone else's event gives the same 404 as a missing one, so other users
     // can't even discover which event ids exist (NFR-002).
-    private Event findOwnedEvent(String organizerEmail, Long eventId) {
+    // CHANGED: public (was private) so other services, like ParticipantService,
+    // reuse this exact ownership check instead of writing their own.
+    public Event findOwnedEvent(String organizerEmail, Long eventId) {
         User organizer = findOrganizer(organizerEmail);
 
         return eventRepository.findByIdAndOrganizerId(eventId, organizer.getId())
