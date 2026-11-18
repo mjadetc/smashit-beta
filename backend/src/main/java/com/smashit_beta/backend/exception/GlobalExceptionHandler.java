@@ -99,6 +99,12 @@ public class GlobalExceptionHandler {
         );
     }
 
+    // Creating/renaming would duplicate something (e.g. a participant name) -> 409.
+    @ExceptionHandler(DuplicateResourceException.class)
+    public ProblemDetail handleDuplicate(DuplicateResourceException ex) {
+        return ProblemDetail.forStatusAndDetail(HttpStatus.CONFLICT, ex.getMessage());
+    }
+
     // Something requested doesn't exist -> 404 Not Found.
     @ExceptionHandler(ResourceNotFoundException.class)
     public ProblemDetail handleNotFound(ResourceNotFoundException ex) {
