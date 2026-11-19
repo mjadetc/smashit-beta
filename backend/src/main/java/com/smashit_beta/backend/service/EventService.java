@@ -10,6 +10,11 @@ import com.smashit_beta.backend.exception.InvalidStateException;
 import com.smashit_beta.backend.exception.ResourceNotFoundException;
 import com.smashit_beta.backend.repository.EventRepository;
 import com.smashit_beta.backend.repository.UserRepository;
+import com.smashit_beta.backend.entity.Match;
+import com.smashit_beta.backend.entity.MatchStatus;
+import com.smashit_beta.backend.repository.MatchRepository;
+
+import java.util.Objects;
 
 import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
@@ -22,12 +27,19 @@ import java.util.List;
 @Service
 public class EventService {
 
+    // Matches that haven't finished yet (they occupy a court).
+    private static final List<MatchStatus> OPEN_STATUSES = List.of(MatchStatus.SCHEDULED, MatchStatus.IN_PROGRESS);
+
     private final EventRepository eventRepository;
     private final UserRepository userRepository;
+    // To look at the event's unfinished matches.
+    private final MatchRepository matchRepository;
 
-    public EventService(EventRepository eventRepository, UserRepository userRepository) {
+    public EventService(EventRepository eventRepository, UserRepository userRepository,
+                        MatchRepository matchRepository) {
         this.eventRepository = eventRepository;
         this.userRepository = userRepository;
+        this.matchRepository = matchRepository;
     }
 
     // FR-005: create an event. The logged-in user automatically becomes the organizer.
@@ -96,6 +108,9 @@ public class EventService {
             );
         }
 
+        // An edit must not break a match that is still on court.
+        checkChangesAgainstOpenMatches(event, request);
+
         event.updateDetails(
                 request.name().trim(),
                 request.location().trim(),
@@ -113,7 +128,7 @@ public class EventService {
         return EventResponse.from(event);
     }
 
-    // NEW: mark an event as successfully finished. It's hidden from the default list.
+    // Mark an event as successfully finished. It's hidden from the default list.
     @Transactional
     public EventResponse complete(String organizerEmail, Long eventId) {
         Event event = findOwnedEvent(organizerEmail, eventId);
@@ -121,6 +136,11 @@ public class EventService {
         // The entity checks its own rules and changes its status.
         // Dirty checking saves the change at commit, just like update().
         event.complete();
+
+        // The session is over, so matches that never finished are cancelled.
+        // (Cancelled matches never count for statistics, FR-035.)
+        cancelOpenMatches(event);
+
         return EventResponse.from(event);
     }
 
@@ -129,6 +149,10 @@ public class EventService {
     public EventResponse cancel(String organizerEmail, Long eventId) {
         Event event = findOwnedEvent(organizerEmail, eventId);
         event.cancel();
+
+        // Same as complete(): nobody plays at a called-off event.
+        cancelOpenMatches(event);
+
         return EventResponse.from(event);
     }
 
@@ -163,6 +187,39 @@ public class EventService {
                     "Change of ends can only be set for the single-game format."
             );
         }
+    }
+
+    // An edit must not break a match that is still on court.
+    //  - The format and change-of-ends score decide how a match is scored, so they
+    //    can't change while a match is being played.
+    //  - Courts can't be removed while one of them still has an unfinished match.
+    private void checkChangesAgainstOpenMatches(Event event, EventRequest request) {
+        List<Match> openMatches = matchRepository.findByEventIdAndStatusIn(event.getId(), OPEN_STATUSES);
+
+        // Objects.equals compares safely even when a value is null (changeEndsAt can be).
+        boolean rulesChange = event.getMatchFormat() != request.matchFormat()
+                || !Objects.equals(event.getChangeEndsAt(), request.changeEndsAt());
+        boolean matchBeingPlayed = openMatches.stream()
+                .anyMatch(match -> match.getStatus() == MatchStatus.IN_PROGRESS);
+        if (rulesChange && matchBeingPlayed) {
+            throw new InvalidStateException(
+                    "The match format and change of ends can't change while a match is being played.");
+        }
+
+        // The highest court number that still has an unfinished match (0 if none).
+        int highestBusyCourt = openMatches.stream().mapToInt(Match::getCourtNumber).max().orElse(0);
+        if (request.courtCount() < highestBusyCourt) {
+            throw new InvalidStateException("Court " + highestBusyCourt
+                    + " still has a match that hasn't finished, so the event needs at least "
+                    + highestBusyCourt + " courts.");
+        }
+    }
+
+    // Cancels every scheduled or in-progress match of the event.
+    // Dirty checking saves the changes at commit.
+    private void cancelOpenMatches(Event event) {
+        matchRepository.findByEventIdAndStatusIn(event.getId(), OPEN_STATUSES)
+                .forEach(Match::cancel);
     }
 
     private User findOrganizer(String organizerEmail) {
