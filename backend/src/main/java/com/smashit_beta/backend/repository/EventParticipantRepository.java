@@ -16,6 +16,10 @@ public interface EventParticipantRepository extends JpaRepository<EventParticipa
     //    WHERE event_id = ? AND active = TRUE ORDER BY player_name ASC
     List<EventParticipant> findByEventIdAndActiveTrueOrderByPlayerNameAsc(Long eventId);
 
+    // EVERYONE in the event, active or removed, alphabetical.
+    // (Statistics still show a removed player's completed matches.)
+    List<EventParticipant> findByEventIdOrderByPlayerNameAsc(Long eventId);
+
     // A participant, but only if it belongs to THIS event.
     // A participant id from a different event gives "empty" -> 404.
     Optional<EventParticipant> findByIdAndEventId(Long id, Long eventId);

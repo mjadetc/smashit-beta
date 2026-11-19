@@ -10,6 +10,9 @@ import com.smashit_beta.backend.repository.EventRepository;
 import com.smashit_beta.backend.repository.UserRepository;
 import com.smashit_beta.backend.entity.EventStatus;
 import com.smashit_beta.backend.exception.InvalidStateException;
+import com.smashit_beta.backend.repository.MatchRepository;
+import com.smashit_beta.backend.entity.Match;
+import com.smashit_beta.backend.entity.MatchStatus;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -26,7 +29,6 @@ import java.time.ZoneOffset;
 import java.util.Optional;
 import java.util.List;
 
-
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
@@ -34,6 +36,7 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
+import static org.mockito.ArgumentMatchers.anyList;
 
 // UNIT tests for EventService: no Spring, no database. The repositories are fakes
 // (Mockito mocks), so each test controls exactly what the "database" returns.
@@ -51,6 +54,12 @@ class EventServiceTest {
 
     @Mock
     private UserRepository userRepository;
+
+    // EventService now also looks at the event's unfinished matches.
+    // Without a @Mock here, @InjectMocks would pass null and complete()/cancel()/update() would crash.
+    // An unstubbed mock returns an empty list, so the older tests see "no open matches".
+    @Mock
+    private MatchRepository matchRepository;
 
     @InjectMocks
     private EventService eventService;
@@ -199,6 +208,67 @@ class EventServiceTest {
 
         assertEquals(EventStatus.CANCELLED, existing.getStatus());
         assertEquals(EventStatus.CANCELLED, response.status());
+    }
+
+    // These matches are the event's unfinished ones.
+    private void givenOpenMatches(Match... matches) {
+        when(matchRepository.findByEventIdAndStatusIn(any(), anyList())).thenReturn(List.of(matches));
+    }
+
+    @Test
+    void shouldCancelUnfinishedMatchesWhenEventIsCompleted() {
+        Event existing = givenOwnedEvent();
+        Match scheduled = new Match(existing, 1);
+        Match playing = new Match(existing, 2);
+        playing.start();
+        givenOpenMatches(scheduled, playing);
+
+        eventService.complete(EMAIL, 5L);
+
+        assertEquals(MatchStatus.CANCELLED, scheduled.getStatus());
+        assertEquals(MatchStatus.CANCELLED, playing.getStatus());
+    }
+
+    @Test
+    void shouldRejectFormatChangeWhileMatchIsBeingPlayed() {
+        Event existing = givenOwnedEvent();
+        Match playing = new Match(existing, 1);
+        playing.start();
+        givenOpenMatches(playing);
+
+        // The event is SINGLE_GAME; the request switches it to BEST_OF_THREE.
+        InvalidStateException ex = assertThrows(InvalidStateException.class, () -> eventService.update(
+                EMAIL, 5L, request(MatchFormat.BEST_OF_THREE, null, START.plusHours(3))));
+
+        assertEquals("The match format and change of ends can't change while a match is being played.",
+                ex.getMessage());
+        assertEquals(MatchFormat.SINGLE_GAME, existing.getMatchFormat());
+    }
+
+    // Other details (here the end time) can still be edited mid-match.
+    @Test
+    void shouldAllowOtherChangesWhileMatchIsBeingPlayed() {
+        Event existing = givenOwnedEvent();
+        Match playing = new Match(existing, 1);
+        playing.start();
+        givenOpenMatches(playing);
+
+        eventService.update(EMAIL, 5L, request(MatchFormat.SINGLE_GAME, null, START.plusHours(4)));
+
+        assertEquals(START.plusHours(4), existing.getEndsAt());
+    }
+
+    @Test
+    void shouldRejectRemovingCourtThatHasUnfinishedMatch() {
+        Event existing = givenOwnedEvent();
+        // A match is waiting on court 3; the request only has 2 courts.
+        givenOpenMatches(new Match(existing, 3));
+
+        InvalidStateException ex = assertThrows(InvalidStateException.class, () -> eventService.update(
+                EMAIL, 5L, request(MatchFormat.SINGLE_GAME, null, START.plusHours(3))));
+
+        assertEquals("Court 3 still has a match that hasn't finished, so the event needs at least 3 courts.",
+                ex.getMessage());
     }
 
     @Test
