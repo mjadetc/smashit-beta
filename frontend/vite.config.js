@@ -22,5 +22,8 @@ export default defineConfig({
     environment: 'jsdom',
     // Runs before every test file (adds matchers like toBeInTheDocument()).
     setupFiles: './src/test/setup.js',
+    // Run the tests in the Philippine time zone, so dates like "7:00 PM" come out the same
+    // on every computer (times are shown in the device's own time zone).
+    env: { TZ: 'Asia/Manila' },
   },
 });

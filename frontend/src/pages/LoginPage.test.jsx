@@ -8,6 +8,8 @@ import { ANA, fakeBackend, renderApp } from '../test/fakeBackend.jsx';
 const NOT_LOGGED_IN = {
   'GET /api/auth/csrf': { status: 204 },
   'GET /api/auth/me': { status: 401 },
+  // My Events loads the active events after logging in; here there are none.
+  'GET /api/events?status=ACTIVE': { body: [] },
 };
 
 // Fills in the login form and presses the button, like a real person would.
@@ -39,7 +41,8 @@ describe('Login page', () => {
     await logIn(user, 'ana@example.com', 'secret123');
 
     expect(await screen.findByRole('heading', { name: 'My Events' })).toBeInTheDocument();
-    expect(screen.getByText(/Hi Ana!/)).toBeInTheDocument();
+    // The header shows who is logged in.
+    expect(screen.getByText('Ana')).toBeInTheDocument();
     const login = requests.find((r) => r.url === '/api/auth/login');
     expect(login.body).toEqual({ email: 'ana@example.com', password: 'secret123' });
   });
@@ -102,7 +105,11 @@ describe('Login page', () => {
     fakeBackend({
       'GET /api/auth/csrf': { status: 204 },
       'GET /api/auth/me': { body: ANA },
+      // My Events loads the active events after logging in; here there are none.
+      'GET /api/events?status=ACTIVE': { body: [] },
     });
+
+    
 
     renderApp('/login');
 
@@ -113,6 +120,8 @@ describe('Login page', () => {
     const requests = fakeBackend({
       'GET /api/auth/csrf': { status: 204 },
       'GET /api/auth/me': { body: ANA },
+      // My Events loads the active events after logging in; here there are none.
+      'GET /api/events?status=ACTIVE': { body: [] },
       'POST /api/auth/logout': { status: 204 },
     });
     const user = userEvent.setup();

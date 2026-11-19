@@ -3,8 +3,11 @@ import { Navigate, Route, Routes } from 'react-router';
 import AuthProvider from './auth/AuthProvider.jsx';
 import { RequireAuth, RequireGuest } from './auth/RouteGuards.jsx';
 import AppLayout from './components/AppLayout.jsx';
+import EditEventPage from './pages/EditEventPage.jsx';
+import EventPage from './pages/EventPage.jsx';
 import EventsPage from './pages/EventsPage.jsx';
 import LoginPage from './pages/LoginPage.jsx';
+import NewEventPage from './pages/NewEventPage.jsx';
 import NotFoundPage from './pages/NotFoundPage.jsx';
 import RegisterPage from './pages/RegisterPage.jsx';
 
@@ -23,9 +26,15 @@ export default function App() {
         <Route path="/register" element={<RequireGuest><RegisterPage /></RequireGuest>} />
 
         {/* A "layout route": no path of its own. Every page inside it needs a login
-            and is drawn inside AppLayout's header frame. Steps 2-7 add pages here. */}
+            and is drawn inside AppLayout's header frame. */}
         <Route element={<RequireAuth><AppLayout /></RequireAuth>}>
           <Route path="/events" element={<EventsPage />} />
+          {/* NEW in step 2. "/events/new" is matched before "/events/:eventId",
+              because React Router prefers fixed text over a ":placeholder". */}
+          <Route path="/events/new" element={<NewEventPage />} />
+          {/* ":eventId" matches anything, e.g. /events/5; useParams() reads it. */}
+          <Route path="/events/:eventId" element={<EventPage />} />
+          <Route path="/events/:eventId/edit" element={<EditEventPage />} />
         </Route>
 
         {/* "*" = any other URL. */}

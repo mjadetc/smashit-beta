@@ -65,3 +65,21 @@ export const ANA = {
   email: 'ana@example.com',
   createdAt: '2026-11-19T00:00:00Z',
 };
+
+
+// An active event, as /api/events returns it. 11:00 UTC = 7:00 PM in Manila,
+// the time zone the tests run in (see "test.env" in vite.config.js).
+export const FRIDAY_SMASH = {
+  id: 5,
+  organizerId: 1,
+  name: 'Friday Night Smash',
+  location: 'Court Hub, Quezon City',
+  startsAt: '2026-11-20T11:00:00Z',
+  endsAt: '2026-11-20T14:00:00Z',
+  courtCount: 2,
+  matchFormat: 'SINGLE_GAME',
+  changeEndsAt: 11,
+  description: 'Bring your own racket.',
+  status: 'ACTIVE',
+  createdAt: '2026-11-19T00:00:00Z',
+};

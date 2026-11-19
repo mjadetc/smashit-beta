@@ -7,6 +7,8 @@ import { ANA, fakeBackend, renderApp } from '../test/fakeBackend.jsx';
 const NOT_LOGGED_IN = {
   'GET /api/auth/csrf': { status: 204 },
   'GET /api/auth/me': { status: 401 },
+  // My Events loads the active events after logging in; here there are none.
+  'GET /api/events?status=ACTIVE': { body: [] },
 };
 
 // Fills in the whole form. `overrides` changes single fields, e.g. { confirmPassword: 'x' }.

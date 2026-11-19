@@ -1,42 +1,99 @@
 /* SmasHIT base styles. Mobile first: the basic rules are for a phone, and the
    @media (min-width: ...) blocks adjust them for bigger screens. */
 
-/* ---------- colors and sizes, in one place ("CSS variables") ---------- */
+/* ---------- colors and sizes, in one place ("CSS variables") ----------
+   The palette: cream background, white cards, teal for the brand and actions,
+   and a "shuttlecock yellow" accent used sparingly for fun highlights (like "Today").
+   Rule of thumb: about 60% background, 30% teal, 10% yellow. */
 :root {
-  --color-bg: #f4f6f5;
-  --color-surface: #ffffff;
-  --color-text: #17211c;
-  --color-muted: #5b6b63;
-  --color-border: #d5ddd9;
-  --color-primary: #0f7a4f;
-  --color-primary-hover: #0b603e;
-  --color-on-primary: #ffffff;
-  --color-error: #b42318;
-  --color-error-bg: #fdecea;
-  --radius: 10px;
-  --shadow: 0 1px 3px rgb(0 0 0 / 0.08);
+  /* Backgrounds */
+  --bg-primary: #fff8ea; /* the page */
+  --bg-secondary: #ffffff; /* cards, header, inputs */
+  --bg-tertiary: #e9eef2; /* quiet surfaces: inactive tabs, neutral badges */
+  --bg-brand: #167d8d;
+  --bg-brand-subtle: #c9f2e8; /* soft teal: the "Active" badge, the selected tab */
+
+  /* Text */
+  --text-primary: #102a43;
+  --text-secondary: #607789; /* less important text ("muted") */
+  --text-brand: #167d8d;
+  --text-inverse: #ffffff; /* text ON a teal button */
+
+  /* Borders */
+  --border-default: #dce5e9;
+  --border-subtle: #e9eef2;
+  --border-strong: #a8bbc5;
+
+  /* Actions (buttons) */
+  --action-primary: #167d8d;
+  --action-primary-hover: #126a78;
+
+  /* Accent: ONLY as a background with dark text on it. Yellow text on cream is unreadable. */
+  --accent: #ffc24b;
+  --accent-text: #102a43;
+
+  /* Errors and "danger" buttons (delete) */
+  --danger: #b42318;
+  --danger-bg: #fdecea;
+
+  --radius: 12px;
+  --shadow: 0 1px 3px rgb(16 42 67 / 0.08);
 
   font-family: system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
   line-height: 1.5;
-  color: var(--color-text);
-  background: var(--color-bg);
+  color: var(--text-primary);
+  background: var(--bg-primary);
 }
 
-/* Dark mode follows the phone's / computer's setting. */
+/* Dark colors. They're used in two cases:
+     1. the phone / computer is set to dark mode, unless the page says data-theme="light"
+     2. the page says data-theme="dark" (for a light/dark switch we might add later)
+   CSS can't share one block between a @media rule and a normal selector, so the
+   same values appear twice. Change both together.
+   Note: dark buttons use a LIGHTER teal (#3cc4ba) with dark text. The original
+   #167d8d with dark text #102a43 only reaches a 3:1 contrast, which is too hard to read. */
 @media (prefers-color-scheme: dark) {
-  :root {
-    --color-bg: #111714;
-    --color-surface: #1a221e;
-    --color-text: #e6ece9;
-    --color-muted: #9aaba2;
-    --color-border: #2f3b35;
-    --color-primary: #34b27b;
-    --color-primary-hover: #4cc58f;
-    --color-on-primary: #0b1510;
-    --color-error: #ff8a80;
-    --color-error-bg: #3a1d1a;
+  :root:not([data-theme='light']) {
+    --bg-primary: #10202e;
+    --bg-secondary: #172c3d;
+    --bg-tertiary: #20394a;
+    --bg-brand: #3cc4ba;
+    --bg-brand-subtle: #193f46;
+    --text-primary: #f4f7f8;
+    --text-secondary: #b3c5d1;
+    --text-brand: #59d8cd;
+    --text-inverse: #102a43;
+    --border-default: #304757;
+    --border-subtle: #263b4a;
+    --border-strong: #526b7a;
+    --action-primary: #3cc4ba;
+    --action-primary-hover: #59d8cd;
+    --accent: #f5b83d;
+    --danger: #ff8a80;
+    --danger-bg: #3a1d1a;
     --shadow: none;
   }
+}
+
+:root[data-theme='dark'] {
+  --bg-primary: #10202e;
+  --bg-secondary: #172c3d;
+  --bg-tertiary: #20394a;
+  --bg-brand: #3cc4ba;
+  --bg-brand-subtle: #193f46;
+  --text-primary: #f4f7f8;
+  --text-secondary: #b3c5d1;
+  --text-brand: #59d8cd;
+  --text-inverse: #102a43;
+  --border-default: #304757;
+  --border-subtle: #263b4a;
+  --border-strong: #526b7a;
+  --action-primary: #3cc4ba;
+  --action-primary-hover: #59d8cd;
+  --accent: #f5b83d;
+  --danger: #ff8a80;
+  --danger-bg: #3a1d1a;
+  --shadow: none;
 }
 
 /* ---------- basics ---------- */
@@ -49,7 +106,7 @@
 body {
   margin: 0;
   min-height: 100vh;
-  background: var(--color-bg);
+  background: var(--bg-primary);
 }
 
 h1 {
@@ -57,25 +114,30 @@ h1 {
   margin: 0 0 0.5rem;
 }
 
+h2 {
+  font-size: 1.15rem;
+  margin: 0 0 0.5rem;
+}
+
 a {
-  color: var(--color-primary);
+  color: var(--text-brand);
 }
 
 .muted {
-  color: var(--color-muted);
+  color: var(--text-secondary);
 }
 
 .brand {
   font-weight: 800;
   font-size: 1.4rem;
-  color: var(--color-primary);
+  color: var(--text-brand);
   text-decoration: none;
   margin: 0;
 }
 
 .card {
-  background: var(--color-surface);
-  border: 1px solid var(--color-border);
+  background: var(--bg-secondary);
+  border: 1px solid var(--border-default);
   border-radius: var(--radius);
   box-shadow: var(--shadow);
   padding: 1.5rem 1.25rem;
@@ -83,7 +145,9 @@ a {
 
 /* ---------- buttons ---------- */
 .button {
-  display: inline-block;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
   font: inherit;
   font-weight: 600;
   text-align: center;
@@ -91,20 +155,35 @@ a {
   padding: 0.6rem 1rem;
   min-height: 44px; /* big enough to tap on a phone */
   border-radius: var(--radius);
-  border: 1px solid var(--color-border);
-  background: var(--color-surface);
-  color: var(--color-text);
+  border: 1px solid var(--border-default);
+  background: var(--bg-secondary);
+  color: var(--text-primary);
   cursor: pointer;
 }
 
+.button:hover:not(:disabled) {
+  border-color: var(--border-strong);
+}
+
 .button.primary {
-  background: var(--color-primary);
-  border-color: var(--color-primary);
-  color: var(--color-on-primary);
+  background: var(--action-primary);
+  border-color: var(--action-primary);
+  color: var(--text-inverse);
 }
 
 .button.primary:hover:not(:disabled) {
-  background: var(--color-primary-hover);
+  background: var(--action-primary-hover);
+  border-color: var(--action-primary-hover);
+}
+
+/* For "Delete": red text, so it doesn't look like the main action. */
+.button.danger {
+  color: var(--danger);
+}
+
+.button.danger:hover:not(:disabled) {
+  background: var(--danger-bg);
+  border-color: var(--danger);
 }
 
 .button.wide {
@@ -114,6 +193,13 @@ a {
 .button:disabled {
   opacity: 0.6;
   cursor: not-allowed;
+}
+
+/* A row of buttons that wraps onto the next line on small screens. */
+.actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
 }
 
 /* ---------- forms ---------- */
@@ -130,35 +216,52 @@ a {
   font-size: 0.95rem;
 }
 
-.field input {
+/* The same look for text inputs, dropdowns and multi-line text. */
+.field input,
+.field select,
+.field textarea {
   font: inherit;
   font-size: 1rem; /* 16px+ stops iPhones zooming in on focus */
   padding: 0.6rem 0.75rem;
   min-height: 44px;
-  border: 1px solid var(--color-border);
+  width: 100%;
+  border: 1px solid var(--border-default);
   border-radius: var(--radius);
-  background: var(--color-surface);
-  color: var(--color-text);
+  background: var(--bg-secondary);
+  color: var(--text-primary);
 }
 
-.field input:focus {
-  outline: 2px solid var(--color-primary);
+.field textarea {
+  min-height: 6rem;
+  resize: vertical; /* can be made taller, but not wider */
+}
+
+.field input:focus,
+.field select:focus,
+.field textarea:focus {
+  outline: 2px solid var(--action-primary);
   outline-offset: 1px;
 }
 
-.field input[aria-invalid='true'] {
-  border-color: var(--color-error);
+.field [aria-invalid='true'] {
+  border-color: var(--danger);
+}
+
+.field-hint {
+  color: var(--text-secondary);
+  font-size: 0.875rem;
+  margin: 0;
 }
 
 .field-error {
-  color: var(--color-error);
+  color: var(--danger);
   font-size: 0.875rem;
   margin: 0;
 }
 
 .form-error {
-  color: var(--color-error);
-  background: var(--color-error-bg);
+  color: var(--danger);
+  background: var(--danger-bg);
   border-radius: var(--radius);
   padding: 0.6rem 0.75rem;
   margin: 0 0 1rem;
@@ -207,8 +310,8 @@ a {
   justify-content: space-between;
   gap: 1rem;
   padding: 0.5rem 1rem;
-  background: var(--color-surface);
-  border-bottom: 1px solid var(--color-border);
+  background: var(--bg-secondary);
+  border-bottom: 1px solid var(--border-default);
 }
 
 .header-user {
@@ -220,11 +323,184 @@ a {
 .page {
   max-width: 960px;
   margin: 0 auto;
-  padding: 1.25rem 1rem;
+  padding: 1.25rem 1rem 3rem;
 }
 
 .page-status {
   text-align: center;
-  color: var(--color-muted);
+  color: var(--text-secondary);
   padding: 3rem 1rem;
+}
+
+/* The title of a page with a button next to it (e.g. "My Events" + "New event"). */
+.page-header {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+  margin-bottom: 1rem;
+}
+
+.page-header h1 {
+  margin: 0;
+}
+
+.back-link {
+  display: inline-block;
+  margin-bottom: 0.75rem;
+  font-weight: 600;
+  text-decoration: none;
+}
+
+/* A narrower column for forms, so lines don't get too long on a laptop. */
+.narrow {
+  max-width: 640px;
+}
+
+/* ---------- filter tabs (Active / Completed / Cancelled) ---------- */
+.tabs {
+  display: flex;
+  gap: 0.5rem;
+  margin-bottom: 1rem;
+  overflow-x: auto; /* scroll sideways instead of squashing on a tiny phone */
+}
+
+.tab {
+  padding: 0.45rem 0.9rem;
+  min-height: 40px;
+  display: inline-flex;
+  align-items: center;
+  border-radius: 999px; /* fully rounded "pill" */
+  background: var(--bg-tertiary);
+  color: var(--text-secondary);
+  font-weight: 600;
+  text-decoration: none;
+  white-space: nowrap;
+}
+
+/* aria-current="page" marks the selected tab, for screen readers AND for styling. */
+.tab[aria-current='page'] {
+  background: var(--bg-brand-subtle);
+  color: var(--text-brand);
+}
+
+/* ---------- event cards ---------- */
+.event-list {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  display: grid;
+  gap: 0.75rem;
+}
+
+/* Two columns from tablet width. */
+@media (min-width: 720px) {
+  .event-list {
+    grid-template-columns: 1fr 1fr;
+  }
+}
+
+/* The whole card is one link, so it's easy to tap. */
+.event-card {
+  display: block;
+  height: 100%;
+  padding: 1rem 1.1rem;
+  color: inherit;
+  text-decoration: none;
+  border-left: 4px solid var(--bg-brand); /* a teal stripe on the left */
+}
+
+.event-card:hover {
+  border-color: var(--border-strong);
+  border-left-color: var(--bg-brand);
+}
+
+.event-card-top {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 0.5rem;
+}
+
+.event-card h2 {
+  margin: 0 0 0.25rem;
+}
+
+.event-card p {
+  margin: 0.15rem 0;
+}
+
+.empty-state {
+  text-align: center;
+  padding: 2.5rem 1.25rem;
+}
+
+.empty-state p {
+  margin: 0 0 1rem;
+}
+
+/* ---------- badges ---------- */
+.badge {
+  display: inline-block;
+  padding: 0.1rem 0.6rem;
+  border-radius: 999px;
+  font-size: 0.8rem;
+  font-weight: 700;
+  white-space: nowrap;
+}
+
+.badge.active {
+  background: var(--bg-brand-subtle);
+  color: var(--text-brand);
+}
+
+.badge.completed {
+  background: var(--bg-tertiary);
+  color: var(--text-secondary);
+}
+
+.badge.cancelled {
+  background: var(--danger-bg);
+  color: var(--danger);
+}
+
+.badge.today {
+  background: var(--accent);
+  color: var(--accent-text);
+}
+
+/* ---------- event details ---------- */
+.event-title {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.5rem;
+  margin-bottom: 1rem;
+}
+
+.event-title h1 {
+  margin: 0;
+}
+
+/* <dl> = "description list": pairs of a term (dt) and its value (dd). */
+.detail-list {
+  display: grid;
+  grid-template-columns: max-content 1fr;
+  gap: 0.5rem 1rem;
+  margin: 0 0 1.25rem;
+}
+
+.detail-list dt {
+  font-weight: 600;
+  color: var(--text-secondary);
+}
+
+.detail-list dd {
+  margin: 0;
+  white-space: pre-line; /* keep the line breaks typed in the description */
+}
+
+.section {
+  margin-top: 1rem;
 }
