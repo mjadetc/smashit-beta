@@ -1,8 +1,11 @@
 package com.smashit_beta.backend.controller;
 
 import com.smashit_beta.backend.dto.request.ExpenseRequest;
+import com.smashit_beta.backend.dto.request.ShareRoundingRequest;
+import com.smashit_beta.backend.dto.request.SharingRequest;
 import com.smashit_beta.backend.dto.response.ExpenseResponse;
 import com.smashit_beta.backend.dto.response.ExpenseSummaryResponse;
+import com.smashit_beta.backend.dto.response.SharingResponse;
 import com.smashit_beta.backend.service.ExpenseService;
 
 import jakarta.validation.Valid;
@@ -23,6 +26,7 @@ import java.net.URI;
 import java.util.List;
 
 // Expenses live under their event: /api/events/{eventId}/expenses
+// Fixed words like "/summary" or "/settings" win over "/{expenseId}", so they don't clash.
 @RestController
 @RequestMapping("/api/events/{eventId}/expenses")
 public class ExpenseController {
@@ -78,10 +82,36 @@ public class ExpenseController {
         return ResponseEntity.noContent().build();
     }
 
-    // GET /api/events/5/expenses/summary -> total, shares, balances, who pays whom.
-    // ("/summary" doesn't clash with "/{expenseId}": that one is only for PUT and DELETE.)
+    // GET /api/events/5/expenses/summary -> totals, shares, balances, who pays whom.
     @GetMapping("/summary")
     public ExpenseSummaryResponse summary(Authentication authentication, @PathVariable Long eventId) {
         return expenseService.summary(authentication.getName(), eventId);
+    }
+
+    // NEW: GET /api/events/5/expenses/sharing -> every participant and whether they share equally.
+    @GetMapping("/sharing")
+    public List<SharingResponse> sharing(Authentication authentication, @PathVariable Long eventId) {
+        return expenseService.sharing(authentication.getName(), eventId);
+    }
+
+    // NEW: PUT /api/events/5/expenses/sharing/12  { "sharesEqually": false }
+    @PutMapping("/sharing/{participantId}")
+    public SharingResponse updateSharing(
+            Authentication authentication,
+            @PathVariable Long eventId,
+            @PathVariable Long participantId,
+            @RequestBody SharingRequest request
+    ) {
+        return expenseService.updateSharing(authentication.getName(), eventId, participantId, request);
+    }
+
+    // NEW: PUT /api/events/5/expenses/settings  { "shareRounding": "PESO_1" } -> the new summary.
+    @PutMapping("/settings")
+    public ExpenseSummaryResponse updateSettings(
+            Authentication authentication,
+            @PathVariable Long eventId,
+            @Valid @RequestBody ShareRoundingRequest request
+    ) {
+        return expenseService.updateRounding(authentication.getName(), eventId, request);
     }
 }

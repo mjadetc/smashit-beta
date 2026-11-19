@@ -63,6 +63,12 @@ public class Event {
     @Column(name = "status", nullable = false, length = 20)
     private EventStatus status;
 
+    // NEW (V11): how equal expense shares are rounded up. Changed from the expenses
+    // screen, not the event form, so it's not part of updateDetails().
+    @Enumerated(EnumType.STRING)
+    @Column(name = "share_rounding", nullable = false, length = 10)
+    private ShareRounding shareRounding;
+
     @Column(name = "created_at", nullable = false, updatable = false)
     private Instant createdAt;
 
@@ -89,6 +95,8 @@ public class Event {
         this.organizer = organizer;
         // NEW: every new event starts ACTIVE.
         this.status = EventStatus.ACTIVE;
+        // NEW: exact shares until the organizer picks a rounding.
+        this.shareRounding = ShareRounding.NONE;
         updateDetails(name, location, startsAt, endsAt, courtCount,
                 matchFormat, changeEndsAt, description);
     }
@@ -155,6 +163,15 @@ public class Event {
     // instead of event.getStatus() == EventStatus.ACTIVE.
     public boolean isActive() {
         return status == EventStatus.ACTIVE;
+    }
+
+    // NEW (V11): choose how equal expense shares are rounded.
+    public void changeShareRounding(ShareRounding shareRounding) {
+        this.shareRounding = shareRounding;
+    }
+
+    public ShareRounding getShareRounding() {
+        return shareRounding;
     }
 
     // Runs automatically right before the first INSERT.

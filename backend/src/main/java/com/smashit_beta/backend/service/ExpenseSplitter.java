@@ -9,92 +9,173 @@ import java.util.Map;
 // The money maths (FR-041 to FR-043), with no database and no Spring, like BadmintonRules.
 //
 // All amounts are whole CENTAVOS (long): 1,234.50 pesos = 123450.
-// Whole numbers can't have rounding errors, and we decide exactly where each
-// leftover centavo goes, so the shares always add up to the exact total.
 //
-//   share   = total / number of sharers   (sharers = the active participants)
-//   balance = what they paid - their share
-//             positive = the group owes them; negative = they owe the group
-//   transfers = a short list of simple payments "X pays Y" that brings every balance to 0
+// CHANGED (V11): the steps are now
+//   1. toCover   = everything paid upfront that must be paid back (gifts are left out)
+//   2. pool      = toCover - all contributions          (never below 0)
+//   3. share     = pool / number of sharers, rounded up to the event's step (or exact)
+//   4. owes      = their contribution + their share (a share only if they share equally)
+//   5. surplus   = what everyone owes - toCover       (from rounding up, or very generous
+//                  contributions). The person who paid the most upfront keeps it.
+//   6. balance   = paid - owes (+ surplus for the one who keeps it)
+//                  positive = they receive money; negative = they pay
+//   7. transfers = a short list of payments "X pays Y" that brings every balance to 0
+//
+// <K> is a "type parameter": the class doesn't care WHAT identifies a person
+// (a participant, or an outside payer's name), only that two equal keys mean the same person.
 public final class ExpenseSplitter {
 
     private ExpenseSplitter() {
     }
 
-    // One payment to settle up: `fromId` pays `toId` this many centavos.
-    public record Transfer(Long fromId, Long toId, long cents) {
+    // One payment to settle up: `from` pays `to` this many centavos.
+    public record Transfer<K>(K from, K to, long cents) {
     }
 
-    // The result. Both maps keep the order of the `people` list given to split().
-    public record Split(Map<Long, Long> shares, Map<Long, Long> balances, List<Transfer> transfers) {
+    // The result. The maps keep the order of the `people` list given to split().
+    //   equalShare    = what one sharer pays (exact split: the smallest share; a few
+    //                   people may pay 1 centavo more)
+    //   surplusKeeper = who keeps the surplus, or null if nobody paid anything upfront
+    //   shortfall     = money nobody is paying for (only when NOBODY shares equally and the
+    //                   contributions don't cover everything), so the UI can warn about it
+    public record Split<K>(
+            Map<K, Long> shares,
+            Map<K, Long> balances,
+            List<Transfer<K>> transfers,
+            long pool,
+            long equalShare,
+            long surplus,
+            K surplusKeeper,
+            long shortfall
+    ) {
     }
 
-    // people   = everyone to report on, in display order (sharers plus anyone else who paid)
-    // sharers  = who splits the cost, in display order (a subset of people)
-    // paid     = participant id -> centavos they paid (missing = paid nothing)
-    public static Split split(List<Long> people, List<Long> sharers, Map<Long, Long> paid) {
-        long total = paid.values().stream().mapToLong(Long::longValue).sum();
+    // people        = everyone to report on, in display order
+    // sharers       = who pays an equal share, in display order (a subset of people)
+    // paid          = person -> centavos paid upfront that must be paid back (missing = 0)
+    // contributions = person -> centavos they willingly put in (missing = 0)
+    // roundingUnit  = 1 for exact shares, 100 to round up to a whole peso, 500, 1000, ...
+    public static <K> Split<K> split(List<K> people, List<K> sharers, Map<K, Long> paid,
+                                     Map<K, Long> contributions, long roundingUnit) {
+        long toCover = sum(paid);
+        long pool = Math.max(0, toCover - sum(contributions));
 
-        // FR-041: equal shares. 100.00 between 3 people = 33.34, 33.33, 33.33:
-        // the leftover centavos go one each to the first sharers in the list.
-        Map<Long, Long> shareOf = new LinkedHashMap<>();
+        // Equal shares of the pool.
+        Map<K, Long> shareOf = new LinkedHashMap<>();
+        long equalShare = 0;
         if (!sharers.isEmpty()) {
-            long base = total / sharers.size();
-            long leftover = total % sharers.size();
-            for (int i = 0; i < sharers.size(); i++) {
-                shareOf.put(sharers.get(i), base + (i < leftover ? 1 : 0));
+            int count = sharers.size();
+            if (roundingUnit <= 1) {
+                // Exact: 100.00 between 3 people = 33.34, 33.33, 33.33.
+                // The leftover centavos go one each to the first sharers in the list.
+                equalShare = pool / count;
+                long leftover = pool % count;
+                for (int i = 0; i < count; i++) {
+                    shareOf.put(sharers.get(i), equalShare + (i < leftover ? 1 : 0));
+                }
+            } else {
+                // Rounded up: everyone pays the same, slightly more than needed.
+                equalShare = ceilDiv(ceilDiv(pool, count), roundingUnit) * roundingUnit;
+                for (K sharer : sharers) {
+                    shareOf.put(sharer, equalShare);
+                }
             }
         }
 
-        Map<Long, Long> shares = new LinkedHashMap<>();
-        Map<Long, Long> balances = new LinkedHashMap<>();
-        for (Long person : people) {
+        // What each person owes in total, and the surplus that creates.
+        Map<K, Long> shares = new LinkedHashMap<>();
+        long totalOwed = 0;
+        for (K person : people) {
             long share = shareOf.getOrDefault(person, 0L);
             shares.put(person, share);
-            balances.put(person, paid.getOrDefault(person, 0L) - share);
+            totalOwed += share + contributions.getOrDefault(person, 0L);
+        }
+        long surplus = Math.max(0, totalOwed - toCover);
+        long shortfall = Math.max(0, toCover - totalOwed);
+
+        // The surplus goes to whoever paid the most upfront (the first one on a tie).
+        K keeper = null;
+        long mostPaid = 0;
+        for (K person : people) {
+            long amount = paid.getOrDefault(person, 0L);
+            if (amount > mostPaid) {
+                mostPaid = amount;
+                keeper = person;
+            }
         }
 
-        return new Split(shares, balances, settle(people, balances));
+        Map<K, Long> balances = new LinkedHashMap<>();
+        for (K person : people) {
+            long owes = shares.get(person) + contributions.getOrDefault(person, 0L);
+            long balance = paid.getOrDefault(person, 0L) - owes;
+            if (person.equals(keeper)) {
+                balance += surplus;
+            }
+            balances.put(person, balance);
+        }
+
+        return new Split<>(shares, balances, settle(people, balances), pool, equalShare, surplus, keeper, shortfall);
     }
 
-    // Matches the people who owe with the people who are owed, biggest amounts first.
+    // Matches the people who pay with the people who receive, biggest amounts first.
     // Each step settles at least one person completely, so there are at most
     // (number of people - 1) transfers.
-    private static List<Transfer> settle(List<Long> people, Map<Long, Long> balances) {
-        // Mutable copies: [id, remaining centavos]. Sorted biggest first;
-        // the sort is stable, so ties stay in display order.
-        List<long[]> owe = new ArrayList<>();
-        List<long[]> owed = new ArrayList<>();
-        for (Long person : people) {
+    private static <K> List<Transfer<K>> settle(List<K> people, Map<K, Long> balances) {
+        // [person, remaining centavos], biggest first. The sort is stable,
+        // so ties stay in display order.
+        List<Remaining<K>> payers = new ArrayList<>();
+        List<Remaining<K>> receivers = new ArrayList<>();
+        for (K person : people) {
             long balance = balances.get(person);
             if (balance < 0) {
-                owe.add(new long[]{person, -balance});
+                payers.add(new Remaining<>(person, -balance));
             } else if (balance > 0) {
-                owed.add(new long[]{person, balance});
+                receivers.add(new Remaining<>(person, balance));
             }
         }
-        Comparator<long[]> biggestFirst = Comparator.comparingLong((long[] entry) -> entry[1]).reversed();
-        owe.sort(biggestFirst);
-        owed.sort(biggestFirst);
+        Comparator<Remaining<K>> biggestFirst = Comparator.comparingLong((Remaining<K> r) -> r.cents).reversed();
+        payers.sort(biggestFirst);
+        receivers.sort(biggestFirst);
 
-        List<Transfer> transfers = new ArrayList<>();
+        List<Transfer<K>> transfers = new ArrayList<>();
         int i = 0;
         int j = 0;
-        while (i < owe.size() && j < owed.size()) {
-            long[] debtor = owe.get(i);
-            long[] creditor = owed.get(j);
-            long amount = Math.min(debtor[1], creditor[1]);
-            transfers.add(new Transfer(debtor[0], creditor[0], amount));
-            debtor[1] -= amount;
-            creditor[1] -= amount;
-            if (debtor[1] == 0) {
+        while (i < payers.size() && j < receivers.size()) {
+            Remaining<K> payer = payers.get(i);
+            Remaining<K> receiver = receivers.get(j);
+            long amount = Math.min(payer.cents, receiver.cents);
+            transfers.add(new Transfer<>(payer.person, receiver.person, amount));
+            payer.cents -= amount;
+            receiver.cents -= amount;
+            if (payer.cents == 0) {
                 i++;
             }
-            if (creditor[1] == 0) {
+            if (receiver.cents == 0) {
                 j++;
             }
         }
-        // Anything left over happens only when nobody shares the cost (no active participants).
+        // Money is left unmatched only in two rare cases: nobody paid anything upfront
+        // (nobody to pay), or nobody shares equally (the shortfall).
         return transfers;
+    }
+
+    // A person and how much they still have to pay or receive while settling.
+    private static class Remaining<K> {
+        final K person;
+        long cents;
+
+        Remaining(K person, long cents) {
+            this.person = person;
+            this.cents = cents;
+        }
+    }
+
+    private static <K> long sum(Map<K, Long> amounts) {
+        return amounts.values().stream().mapToLong(Long::longValue).sum();
+    }
+
+    // Division that rounds UP: ceilDiv(10, 3) = 4. (Only for positive numbers.)
+    private static long ceilDiv(long a, long b) {
+        return (a + b - 1) / b;
     }
 }

@@ -9,6 +9,10 @@ import java.time.LocalDate;
 // One thing someone paid for, for the whole group (table expenses, FR-039 / FR-040).
 // Each participant's share is NOT stored here: it's calculated from all the
 // event's expenses whenever the summary is asked for (FR-041).
+//
+// CHANGED (V11): the payer is EITHER a participant (paidBy) OR an outside person
+// (outsidePayerName, e.g. a non-playing organizer). An outside payer is either paid
+// back (outsidePayerRepaid = true) or gave it as a gift (false).
 @Entity
 @Table(name = "expenses")
 public class Expense {
@@ -21,10 +25,18 @@ public class Expense {
     @JoinColumn(name = "event_id", nullable = false)
     private Event event;
 
-    // The participant who paid upfront.
-    @ManyToOne(fetch = FetchType.LAZY, optional = false)
-    @JoinColumn(name = "paid_by_id", nullable = false)
+    // The participant who paid upfront, or null when an outside person paid.
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "paid_by_id")
     private EventParticipant paidBy;
+
+    // NEW (V11): only for outside payers.
+    @Column(name = "outside_payer_name", length = 80)
+    private String outsidePayerName;
+
+    // NEW (V11): only for outside payers. Boolean (not boolean) so it can be null.
+    @Column(name = "outside_payer_repaid")
+    private Boolean outsidePayerRepaid;
 
     @Column(name = "description", nullable = false, length = 255)
     private String description;
@@ -52,20 +64,42 @@ public class Expense {
     protected Expense() {
     }
 
-    public Expense(Event event, EventParticipant paidBy, String description, ExpenseCategory category,
+    public Expense(Event event, String description, ExpenseCategory category,
                    BigDecimal amount, LocalDate expenseDate) {
         this.event = event;
-        update(paidBy, description, category, amount, expenseDate);
+        updateDetails(description, category, amount, expenseDate);
     }
 
-    // Changes every editable detail at once (like Event.updateDetails). The event can't change.
-    public void update(EventParticipant paidBy, String description, ExpenseCategory category,
-                       BigDecimal amount, LocalDate expenseDate) {
-        this.paidBy = paidBy;
+    // The details that don't depend on who paid. The event can't change.
+    public void updateDetails(String description, ExpenseCategory category,
+                              BigDecimal amount, LocalDate expenseDate) {
         this.description = description;
         this.category = category;
         this.amount = amount;
         this.expenseDate = expenseDate;
+    }
+
+    // A participant paid. Clears any outside payer (chk_expenses_one_payer in V11).
+    public void paidByParticipant(EventParticipant participant) {
+        this.paidBy = participant;
+        this.outsidePayerName = null;
+        this.outsidePayerRepaid = null;
+    }
+
+    // Someone outside the event paid. repaid = false means it was a gift.
+    public void paidByOutsider(String name, boolean repaid) {
+        this.paidBy = null;
+        this.outsidePayerName = name;
+        this.outsidePayerRepaid = repaid;
+    }
+
+    public boolean isPaidByOutsider() {
+        return paidBy == null;
+    }
+
+    // A gift from an outside payer: nobody pays it back, so it comes off the total.
+    public boolean isGift() {
+        return isPaidByOutsider() && !outsidePayerRepaid;
     }
 
     @PrePersist
@@ -90,6 +124,14 @@ public class Expense {
 
     public EventParticipant getPaidBy() {
         return paidBy;
+    }
+
+    public String getOutsidePayerName() {
+        return outsidePayerName;
+    }
+
+    public Boolean getOutsidePayerRepaid() {
+        return outsidePayerRepaid;
     }
 
     public String getDescription() {

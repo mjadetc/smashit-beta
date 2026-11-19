@@ -224,6 +224,51 @@ class SchemaConstraintsTest {
         ));
     }
 
+    // NEW (V11): an expense needs exactly one kind of payer.
+    // (Two tests, because after one failed INSERT PostgreSQL refuses anything else
+    // in the same transaction.)
+    @Test
+    void shouldRejectExpenseWithNoPayer() {
+        Long eventId = insertEvent("SINGLE_GAME", null);
+
+        assertThrows(DataIntegrityViolationException.class, () -> jdbcTemplate.update(
+                """
+                INSERT INTO expenses (event_id, description, category, amount, expense_date)
+                VALUES (?, 'Court', 'COURT_RENTAL', 100.00, CURRENT_DATE)
+                """,
+                eventId
+        ));
+    }
+
+    // NEW (V11)
+    @Test
+    void shouldRejectExpenseWithTwoKindsOfPayer() {
+        Long eventId = insertEvent("SINGLE_GAME", null);
+        Long payerId = insertParticipant(eventId, "Ana");
+
+        // A participant AND an outside payer.
+        assertThrows(DataIntegrityViolationException.class, () -> jdbcTemplate.update(
+                """
+                INSERT INTO expenses (event_id, paid_by_id, outside_payer_name, outside_payer_repaid,
+                                      description, category, amount, expense_date)
+                VALUES (?, ?, 'Coach Jun', TRUE, 'Court', 'COURT_RENTAL', 100.00, CURRENT_DATE)
+                """,
+                eventId, payerId
+        ));
+    }
+
+    // NEW (V11)
+    @Test
+    void shouldRejectZeroContribution() {
+        Long eventId = insertEvent("SINGLE_GAME", null);
+        Long participantId = insertParticipant(eventId, "Ana");
+
+        assertThrows(DataIntegrityViolationException.class, () -> jdbcTemplate.update(
+                "INSERT INTO contributions (event_id, participant_id, amount) VALUES (?, ?, 0)",
+                eventId, participantId
+        ));
+    }
+
     // ---------- deleting an event (FR-008) ----------
 
     @Test

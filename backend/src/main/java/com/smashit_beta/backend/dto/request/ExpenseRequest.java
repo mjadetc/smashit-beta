@@ -11,9 +11,14 @@ import jakarta.validation.constraints.Size;
 import java.math.BigDecimal;
 import java.time.LocalDate;
 
-// FR-040: the JSON body for recording or editing an expense, e.g.
-// { "description": "Court 1 and 2, 3 hours", "category": "COURT_RENTAL",
-//   "amount": 1500.00, "expenseDate": "2026-11-20", "paidById": 12 }
+// FR-040: the JSON body for recording or editing an expense.
+// CHANGED (V11): give EITHER paidById (a participant) OR outsidePayerName (someone
+// outside the event). For an outside payer, outsidePayerRepaid = false means it was a
+// gift (it comes off the total); missing or true means they get paid back. Examples:
+//   { ..., "paidById": 12 }
+//   { ..., "outsidePayerName": "Coach Jun" }                                (paid back)
+//   { ..., "outsidePayerName": "Coach Jun", "outsidePayerRepaid": false }   (a gift)
+// "Exactly one payer" involves two fields, so it's checked in ExpenseService.
 public record ExpenseRequest(
 
         @NotBlank(message = "Description is required.")
@@ -23,7 +28,6 @@ public record ExpenseRequest(
         @NotNull(message = "Category is required.")
         ExpenseCategory category,
 
-        // inclusive = true: 0.01 itself is allowed.
         // @Digits matches NUMERIC(10, 2): up to 8 digits before the point, 2 after.
         @NotNull(message = "Amount is required.")
         @DecimalMin(value = "0.01", message = "Amount must be at least 0.01.")
@@ -33,7 +37,14 @@ public record ExpenseRequest(
         @NotNull(message = "Date is required.")
         LocalDate expenseDate,
 
-        @NotNull(message = "Choose who paid.")
-        Long paidById
+        // CHANGED: no longer required on its own.
+        Long paidById,
+
+        // NEW
+        @Size(max = 80, message = "The payer's name must be at most 80 characters.")
+        String outsidePayerName,
+
+        // NEW: Boolean (not boolean) so "not given" arrives as null.
+        Boolean outsidePayerRepaid
 ) {
 }
