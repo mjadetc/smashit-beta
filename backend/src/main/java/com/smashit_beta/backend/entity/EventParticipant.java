@@ -28,6 +28,12 @@ public class EventParticipant {
     @Column(name = "active", nullable = false)
     private boolean active;
 
+    // NEW (V11): does this person pay an equal share of the expenses?
+    // null = the default rule (yes if active or they finished a match);
+    // true / false = the organizer decided. "Boolean" (not "boolean") so it can be null.
+    @Column(name = "shares_equally")
+    private Boolean sharesEqually;
+
     @Column(name = "created_at", nullable = false, updatable = false)
     private Instant createdAt;
 
@@ -57,6 +63,15 @@ public class EventParticipant {
     // Add a previously removed participant back, keeping their old history.
     public void restore() {
         this.active = true;
+    }
+
+    // NEW (V11): the organizer's choice; null goes back to the default rule.
+    public void changeSharesEqually(Boolean sharesEqually) {
+        this.sharesEqually = sharesEqually;
+    }
+
+    public Boolean getSharesEqually() {
+        return sharesEqually;
     }
 
     @PrePersist
