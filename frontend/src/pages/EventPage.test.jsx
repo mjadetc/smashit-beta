@@ -7,6 +7,8 @@ import { ANA, fakeBackend, FRIDAY_SMASH, renderApp } from '../test/fakeBackend.j
 const LOGGED_IN = {
   'GET /api/auth/csrf': { status: 204 },
   'GET /api/auth/me': { body: ANA },
+  // The event page also loads the event's players; here there are none.
+  'GET /api/events/5/participants': { body: [] },
 };
 
 // Pretend the person answers the browser's "Are you sure?" box with OK (true) or Cancel (false).

@@ -504,3 +504,112 @@ a {
 .section {
   margin-top: 1rem;
 }
+
+
+/* ---------- players (step 3) ---------- */
+
+/* A heading with a small number next to it: "Players  12". */
+.section-header {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.section-header h2 {
+  margin: 0;
+}
+
+.count-pill {
+  min-width: 1.75rem;
+  padding: 0.05rem 0.55rem;
+  border-radius: 999px;
+  background: var(--accent); /* the yellow accent: a small, cheerful highlight */
+  color: var(--accent-text);
+  font-weight: 700;
+  font-size: 0.85rem;
+  text-align: center;
+}
+
+/* An input with its button(s) on the same line. */
+.inline-form {
+  display: flex;
+  gap: 0.5rem;
+}
+
+.inline-form input {
+  flex: 1;
+  min-width: 0; /* lets the input shrink on narrow phones instead of pushing the buttons out */
+}
+
+.inline-form .button {
+  flex: none;
+}
+
+/* The rename box isn't inside a .field, so it gets the same input look here. */
+.rename-form {
+  flex: 1;
+}
+
+.rename-form input {
+  font: inherit;
+  font-size: 1rem;
+  padding: 0.45rem 0.65rem;
+  min-height: 40px;
+  border: 1px solid var(--border-default);
+  border-radius: var(--radius);
+  background: var(--bg-secondary);
+  color: var(--text-primary);
+}
+
+.rename-form input:focus {
+  outline: 2px solid var(--action-primary);
+  outline-offset: 1px;
+}
+
+/* A smaller button for the rows of a list. Still 40px tall, so easy to tap. */
+.button.small {
+  min-height: 40px;
+  padding: 0.35rem 0.75rem;
+  font-size: 0.9rem;
+}
+
+.player-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.player-row {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 0.6rem 0;
+  border-top: 1px solid var(--border-subtle);
+}
+
+/* The round first-letter badge. */
+.avatar {
+  flex: none;
+  width: 2.25rem;
+  height: 2.25rem;
+  border-radius: 50%;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--bg-brand-subtle);
+  color: var(--text-brand);
+  font-weight: 700;
+}
+
+.player-name {
+  flex: 1;
+  min-width: 0;
+  overflow-wrap: anywhere; /* a very long name wraps instead of overflowing */
+  font-weight: 600;
+}
+
+.row-actions {
+  display: flex;
+  gap: 0.4rem;
+  flex: none;
+}

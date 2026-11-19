@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { Link, useNavigate, useParams } from 'react-router';
+import PlayersSection from '../components/PlayersSection.jsx';
 
 import {
   cancelEvent,
@@ -21,7 +22,7 @@ const CONFIRMATIONS = {
 };
 
 // /events/5: the event's details and what the organizer can do with it.
-// Steps 3-7 add Players, Courts, Stats and Expenses to this page.
+// Steps 4-7 add Players, Courts, Stats and Expenses to this page.
 export default function EventPage() {
   const { eventId } = useParams();
   const navigate = useNavigate();
@@ -166,7 +167,11 @@ export default function EventPage() {
         </div>
       </div>
 
-      <p className="muted section">Players, courts, stats and expenses will appear here next.</p>
+      {/* NEW in step 3: the event's players. It gets the whole event, so after
+      "Mark completed" it sees the new status and stops allowing changes. */}
+      <PlayersSection event={event} />
+
+      <p className="muted section">Courts, stats and expenses will appear here next.</p>
     </section>
   );
 }
