@@ -1077,12 +1077,17 @@ a {
 
 /* ---------- stats (step 6) ---------- */
 
-/* "Open courts" and "Stats" side by side on the event page. Courts gets more room. */
+/* The event page's links. CHANGED in step 7: "Open courts" on its own row
+   (the main thing to do), then "Stats" and "Expenses" side by side. */
 .event-links {
   display: grid;
-  grid-template-columns: 2fr 1fr;
+  grid-template-columns: 1fr 1fr;
   gap: 0.5rem;
   margin-bottom: 1rem;
+}
+
+.event-links .button.primary {
+  grid-column: 1 / -1; /* from the first column line to the last: the full width */
 }
 
 .event-links .courts-link {
@@ -1193,4 +1198,218 @@ a {
 .result-row .result-detail {
   font-size: 0.875rem;
   margin-top: 0.15rem;
+}
+
+
+/* ---------- expenses (step 7) ---------- */
+
+/* The sum: "Total spent ... ₱1,200.00" lines, amounts on the right. */
+.money-sum {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  row-gap: 0.35rem; /* no column gap, so the line above "Split equally" has no hole */
+  margin: 0 0 1rem;
+  font-variant-numeric: tabular-nums;
+}
+
+.money-sum dd {
+  margin: 0;
+  padding-left: 1rem;
+  text-align: right;
+}
+
+/* The last line ("Split equally") gets a line above it, like a sum on paper. */
+.money-sum .money-sum-total {
+  border-top: 1px solid var(--border-default);
+  padding-top: 0.35rem;
+  font-weight: 700;
+}
+
+/* "₱150.00 each, for 8 players": the number people ask about, so it's big. */
+.equal-share {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 0.4rem;
+  background: var(--bg-brand-subtle);
+  border-radius: var(--radius);
+  padding: 0.75rem 1rem;
+  margin: 0 0 1rem;
+}
+
+.equal-share-amount {
+  font-size: 1.75rem;
+  font-weight: 800;
+  color: var(--text-brand);
+  font-variant-numeric: tabular-nums;
+}
+
+/* Expense and contribution rows. */
+.money-list {
+  list-style: none;
+  margin: 1rem 0 0;
+  padding: 0;
+}
+
+.money-row {
+  padding: 0.75rem 0;
+  border-top: 1px solid var(--border-subtle);
+}
+
+.money-main {
+  display: flex;
+  justify-content: space-between;
+  gap: 0.75rem;
+}
+
+.money-title {
+  font-weight: 600;
+  overflow-wrap: anywhere;
+}
+
+.money-amount {
+  font-weight: 700;
+  white-space: nowrap;
+  font-variant-numeric: tabular-nums;
+}
+
+.money-row .money-detail {
+  margin: 0.15rem 0 0.5rem;
+  font-size: 0.875rem;
+}
+
+/* The add / edit forms: a soft box, so it's clear what's being edited. */
+.money-form {
+  background: var(--bg-tertiary);
+  border-radius: var(--radius);
+  padding: 0.75rem;
+  margin-bottom: 0.5rem;
+}
+
+.money-form .field input,
+.money-form .field select {
+  background: var(--bg-secondary);
+}
+
+/* A checkbox with its text: the whole line can be tapped. */
+.check-field {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.6rem;
+  min-height: 44px;
+  padding: 0.35rem 0;
+  cursor: pointer;
+  flex: 1;
+}
+
+.check-field input {
+  width: 1.25rem;
+  height: 1.25rem;
+  margin-top: 0.15rem;
+  flex: none;
+  accent-color: var(--action-primary);
+}
+
+.check-field .field-hint {
+  display: block;
+}
+
+.money-form .check-field {
+  margin-bottom: 1rem;
+}
+
+.sharing-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.sharing-row {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  border-top: 1px solid var(--border-subtle);
+  padding: 0.25rem 0;
+}
+
+/* Settle up: one block per person who receives money. */
+.receiver-list,
+.payment-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.receiver {
+  padding: 0.6rem 0;
+  border-top: 1px solid var(--border-subtle);
+}
+
+.receiver:first-child {
+  border-top: 0;
+}
+
+.receiver-title {
+  margin: 0 0 0.25rem;
+}
+
+.payment {
+  display: flex;
+  justify-content: space-between;
+  gap: 0.75rem;
+  padding: 0.15rem 0 0.15rem 1rem;
+  color: var(--text-secondary);
+}
+
+/* "Everyone's numbers": a <details> box. Its <summary> is the clickable line. */
+.balances {
+  margin-top: 1rem;
+}
+
+.balances summary {
+  cursor: pointer;
+  font-weight: 600;
+  color: var(--text-brand);
+  min-height: 44px;
+  display: flex;
+  align-items: center;
+}
+
+.balance-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-variant-numeric: tabular-nums;
+  margin-bottom: 0.5rem;
+}
+
+.balance-table th,
+.balance-table td {
+  padding: 0.5rem 0.4rem;
+  text-align: right;
+  border-bottom: 1px solid var(--border-subtle);
+  white-space: nowrap;
+}
+
+.balance-table thead th {
+  font-size: 0.75rem;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: var(--text-secondary);
+}
+
+.balance-table .player-col {
+  text-align: left;
+  width: 100%;
+  white-space: normal;
+  overflow-wrap: anywhere;
+}
+
+.balance-plus {
+  color: var(--text-brand);
+  font-weight: 700;
+}
+
+.balance-minus {
+  color: var(--danger);
+  font-weight: 700;
 }

@@ -22,7 +22,7 @@ const CONFIRMATIONS = {
 };
 
 // /events/5: the event's details and what the organizer can do with it.
-// Step 3 added Players, step 4 the "Open courts" button, step 6 "Stats"; step 7 adds Expenses.
+// Step 3 added Players, step 4 the "Open courts" button, step 6 "Stats", step 7 "Expenses".
 export default function EventPage() {
   const { eventId } = useParams();
   const navigate = useNavigate();
@@ -92,13 +92,16 @@ export default function EventPage() {
       </div>
 
       
-      {/* NEW in step 6: the two places to go, side by side: courts (main) and stats. */}
+      {/* Where to go next: courts (the main button, full width), then stats and expenses. */}
       <div className="event-links">
         <Link to={`/events/${event.id}/courts`} className="button primary courts-link">
           <span aria-hidden="true">🏸</span> Open courts
         </Link>
         <Link to={`/events/${event.id}/stats`} className="button courts-link">
           <span aria-hidden="true">📊</span> Stats
+        </Link>
+        <Link to={`/events/${event.id}/expenses`} className="button courts-link">
+          <span aria-hidden="true">💸</span> Expenses
         </Link>
       </div>
 
@@ -182,8 +185,6 @@ export default function EventPage() {
       {/* NEW in step 3: the event's players. It gets the whole event, so after
       "Mark completed" it sees the new status and stops allowing changes. */}
       <PlayersSection event={event} />
-
-      <p className="muted section">Courts, stats and expenses will appear here next.</p>
     </section>
   );
 }

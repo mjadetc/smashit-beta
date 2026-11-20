@@ -1,6 +1,13 @@
 import { describe, expect, it } from 'vitest';
 
-import { formatEventTime, fromLocalInputValue, startsToday, toLocalInputValue } from './dates.js';
+import {
+  formatDate,
+  formatEventTime,
+  fromLocalInputValue,
+  startsToday,
+  todayDate,
+  toLocalInputValue,
+} from './dates.js';
 
 // These run in the Asia/Manila time zone (UTC+8), see "test.env" in vite.config.js.
 describe('dates', () => {
@@ -31,5 +38,18 @@ describe('dates', () => {
     const now = new Date('2026-11-20T02:00:00Z'); // 10:00 AM on Nov 20 in Manila
     expect(startsToday('2026-11-20T11:00:00Z', now)).toBe(true);
     expect(startsToday('2026-11-21T11:00:00Z', now)).toBe(false);
+  });
+});
+
+
+// NEW in step 7: dates without a time (expense dates).
+describe('dates without a time', () => {
+  it("gives today's date in the device's time zone", () => {
+    // 11:30 PM on Nov 19 in London is already Nov 20 in Manila.
+    expect(todayDate(new Date('2026-11-19T23:30:00Z'))).toBe('2026-11-20');
+  });
+
+  it('shows a date as a short day', () => {
+    expect(formatDate('2026-11-20')).toBe('Fri, Nov 20');
   });
 });

@@ -22,3 +22,20 @@ export function courtsLabel(count) {
 export function teamName(players) {
   return players.map((player) => player.playerName).join(' & ');
 }
+
+// What an expense was for (the backend's ExpenseCategory), in the order of the dropdown.
+export const CATEGORY_LABELS = {
+  COURT_RENTAL: 'Court rental',
+  SHUTTLECOCKS: 'Shuttlecocks',
+  FOOD_AND_DRINKS: 'Food and drinks',
+  TRANSPORTATION: 'Transportation',
+  OTHER: 'Other',
+};
+
+// How each equal share is rounded UP, so people can pay in cash (the backend's ShareRounding).
+export const ROUNDING_LABELS = {
+  NONE: 'Exact (to the centavo)',
+  PESO_1: 'Up to a whole peso',
+  PESO_5: 'Up to ₱5',
+  PESO_10: 'Up to ₱10',
+};

@@ -80,3 +80,20 @@ export function formatDuration(seconds) {
   const minutes = Math.round(seconds / 60);
   return minutes < 1 ? 'under 1 min' : `${minutes} min`;
 }
+
+
+// Today as "2026-11-20", the format of <input type="date"> and of the backend's dates.
+// `now` can be passed in, so tests don't depend on the clock.
+export function todayDate(now = new Date()) {
+  return toLocalInputValue(now.toISOString()).slice(0, 10);
+}
+
+const shortDayFormat = new Intl.DateTimeFormat('en-US', { weekday: 'short', month: 'short', day: 'numeric' });
+
+// "2026-11-20" -> "Fri, Nov 20".
+// A date without a time is split by hand: new Date("2026-11-20") would mean midnight
+// in LONDON (UTC), which is still the 19th in some time zones.
+export function formatDate(dateText) {
+  const [year, month, day] = dateText.split('-').map(Number);
+  return shortDayFormat.format(new Date(year, month - 1, day)); // months count from 0
+}
