@@ -1,111 +1,1415 @@
+/* SmasHIT base styles. Mobile first: the basic rules are for a phone, and the
+   @media (min-width: ...) blocks adjust them for bigger screens. */
+
+/* ---------- colors and sizes, in one place ("CSS variables") ----------
+   The palette: cream background, white cards, teal for the brand and actions,
+   and a "shuttlecock yellow" accent used sparingly for fun highlights (like "Today").
+   Rule of thumb: about 60% background, 30% teal, 10% yellow. */
 :root {
-  --text: #6b6375;
-  --text-h: #08060d;
-  --bg: #fff;
-  --border: #e5e4e7;
-  --code-bg: #f4f3ec;
-  --accent: #aa3bff;
-  --accent-bg: rgba(170, 59, 255, 0.1);
-  --accent-border: rgba(170, 59, 255, 0.5);
-  --social-bg: rgba(244, 243, 236, 0.5);
-  --shadow:
-    rgba(0, 0, 0, 0.1) 0 10px 15px -3px, rgba(0, 0, 0, 0.05) 0 4px 6px -2px;
+  /* Backgrounds */
+  --bg-primary: #fff8ea; /* the page */
+  --bg-secondary: #ffffff; /* cards, header, inputs */
+  --bg-tertiary: #e9eef2; /* quiet surfaces: inactive tabs, neutral badges */
+  --bg-brand: #167d8d;
+  --bg-brand-subtle: #c9f2e8; /* soft teal: the "Active" badge, the selected tab */
 
-  --sans: system-ui, 'Segoe UI', Roboto, sans-serif;
-  --heading: system-ui, 'Segoe UI', Roboto, sans-serif;
-  --mono: ui-monospace, Consolas, monospace;
+  /* Text */
+  --text-primary: #102a43;
+  --text-secondary: #607789; /* less important text ("muted") */
+  --text-brand: #167d8d;
+  --text-inverse: #ffffff; /* text ON a teal button */
 
-  font: 18px/145% var(--sans);
-  letter-spacing: 0.18px;
-  color-scheme: light dark;
-  color: var(--text);
-  background: var(--bg);
-  font-synthesis: none;
-  text-rendering: optimizeLegibility;
-  -webkit-font-smoothing: antialiased;
-  -moz-osx-font-smoothing: grayscale;
+  /* Borders */
+  --border-default: #dce5e9;
+  --border-subtle: #e9eef2;
+  --border-strong: #a8bbc5;
 
-  @media (max-width: 1024px) {
-    font-size: 16px;
+  /* Actions (buttons) */
+  --action-primary: #167d8d;
+  --action-primary-hover: #126a78;
+
+  /* Accent: ONLY as a background with dark text on it. Yellow text on cream is unreadable. */
+  --accent: #ffc24b;
+  --accent-text: #102a43;
+
+  /* Errors and "danger" buttons (delete) */
+  --danger: #b42318;
+  --danger-bg: #fdecea;
+
+  --radius: 12px;
+  --shadow: 0 1px 3px rgb(16 42 67 / 0.08);
+
+  font-family: system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
+  line-height: 1.5;
+  color: var(--text-primary);
+  background: var(--bg-primary);
+}
+
+/* Dark colors. They're used in two cases:
+     1. the phone / computer is set to dark mode, unless the page says data-theme="light"
+     2. the page says data-theme="dark" (for a light/dark switch we might add later)
+   CSS can't share one block between a @media rule and a normal selector, so the
+   same values appear twice. Change both together.
+   Note: dark buttons use a LIGHTER teal (#3cc4ba) with dark text. The original
+   #167d8d with dark text #102a43 only reaches a 3:1 contrast, which is too hard to read. */
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme='light']) {
+    --bg-primary: #10202e;
+    --bg-secondary: #172c3d;
+    --bg-tertiary: #20394a;
+    --bg-brand: #3cc4ba;
+    --bg-brand-subtle: #193f46;
+    --text-primary: #f4f7f8;
+    --text-secondary: #b3c5d1;
+    --text-brand: #59d8cd;
+    --text-inverse: #102a43;
+    --border-default: #304757;
+    --border-subtle: #263b4a;
+    --border-strong: #526b7a;
+    --action-primary: #3cc4ba;
+    --action-primary-hover: #59d8cd;
+    --accent: #f5b83d;
+    --danger: #ff8a80;
+    --danger-bg: #3a1d1a;
+    --shadow: none;
   }
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --text: #9ca3af;
-    --text-h: #f3f4f6;
-    --bg: #16171d;
-    --border: #2e303a;
-    --code-bg: #1f2028;
-    --accent: #c084fc;
-    --accent-bg: rgba(192, 132, 252, 0.15);
-    --accent-border: rgba(192, 132, 252, 0.5);
-    --social-bg: rgba(47, 48, 58, 0.5);
-    --shadow:
-      rgba(0, 0, 0, 0.4) 0 10px 15px -3px, rgba(0, 0, 0, 0.25) 0 4px 6px -2px;
-  }
+:root[data-theme='dark'] {
+  --bg-primary: #10202e;
+  --bg-secondary: #172c3d;
+  --bg-tertiary: #20394a;
+  --bg-brand: #3cc4ba;
+  --bg-brand-subtle: #193f46;
+  --text-primary: #f4f7f8;
+  --text-secondary: #b3c5d1;
+  --text-brand: #59d8cd;
+  --text-inverse: #102a43;
+  --border-default: #304757;
+  --border-subtle: #263b4a;
+  --border-strong: #526b7a;
+  --action-primary: #3cc4ba;
+  --action-primary-hover: #59d8cd;
+  --accent: #f5b83d;
+  --danger: #ff8a80;
+  --danger-bg: #3a1d1a;
+  --shadow: none;
+}
 
-  #social .button-icon {
-    filter: invert(1) brightness(2);
-  }
+/* ---------- basics ---------- */
+*,
+*::before,
+*::after {
+  box-sizing: border-box; /* width includes padding and border: easier layouts */
 }
 
 body {
   margin: 0;
-}
-
-#root {
-  width: 1126px;
-  max-width: 100%;
-  margin: 0 auto;
-  text-align: center;
-  border-inline: 1px solid var(--border);
-  min-height: 100svh;
-  display: flex;
-  flex-direction: column;
-  box-sizing: border-box;
-}
-
-h1,
-h2 {
-  font-family: var(--heading);
-  font-weight: 500;
-  color: var(--text-h);
+  min-height: 100vh;
+  background: var(--bg-primary);
 }
 
 h1 {
-  font-size: 56px;
-  letter-spacing: -1.68px;
-  margin: 32px 0;
-  @media (max-width: 1024px) {
-    font-size: 36px;
-    margin: 20px 0;
-  }
+  font-size: 1.5rem;
+  margin: 0 0 0.5rem;
 }
+
 h2 {
-  font-size: 24px;
-  line-height: 118%;
-  letter-spacing: -0.24px;
-  margin: 0 0 8px;
-  @media (max-width: 1024px) {
-    font-size: 20px;
-  }
+  font-size: 1.15rem;
+  margin: 0 0 0.5rem;
 }
-p {
+
+a {
+  color: var(--text-brand);
+}
+
+.muted {
+  color: var(--text-secondary);
+}
+
+.brand {
+  font-weight: 800;
+  font-size: 1.4rem;
+  color: var(--text-brand);
+  text-decoration: none;
   margin: 0;
 }
 
-code,
-.counter {
-  font-family: var(--mono);
-  display: inline-flex;
-  border-radius: 4px;
-  color: var(--text-h);
+.card {
+  background: var(--bg-secondary);
+  border: 1px solid var(--border-default);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow);
+  padding: 1.5rem 1.25rem;
 }
 
-code {
-  font-size: 15px;
-  line-height: 135%;
-  padding: 4px 8px;
-  background: var(--code-bg);
+/* ---------- buttons ---------- */
+.button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font: inherit;
+  font-weight: 600;
+  text-align: center;
+  text-decoration: none;
+  padding: 0.6rem 1rem;
+  min-height: 44px; /* big enough to tap on a phone */
+  border-radius: var(--radius);
+  border: 1px solid var(--border-default);
+  background: var(--bg-secondary);
+  color: var(--text-primary);
+  cursor: pointer;
+}
+
+.button:hover:not(:disabled) {
+  border-color: var(--border-strong);
+}
+
+.button.primary {
+  background: var(--action-primary);
+  border-color: var(--action-primary);
+  color: var(--text-inverse);
+}
+
+.button.primary:hover:not(:disabled) {
+  background: var(--action-primary-hover);
+  border-color: var(--action-primary-hover);
+}
+
+/* For "Delete": red text, so it doesn't look like the main action. */
+.button.danger {
+  color: var(--danger);
+}
+
+.button.danger:hover:not(:disabled) {
+  background: var(--danger-bg);
+  border-color: var(--danger);
+}
+
+.button.wide {
+  width: 100%;
+}
+
+.button:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+/* A row of buttons that wraps onto the next line on small screens. */
+.actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+}
+
+/* ---------- forms ---------- */
+.field {
+  display: flex;
+  flex-direction: column;
+  gap: 0.3rem;
+  margin-bottom: 1rem;
+  flex: 1; /* share the row equally inside .field-row */
+}
+
+.field label {
+  font-weight: 600;
+  font-size: 0.95rem;
+}
+
+/* The same look for text inputs, dropdowns and multi-line text. */
+.field input,
+.field select,
+.field textarea {
+  font: inherit;
+  font-size: 1rem; /* 16px+ stops iPhones zooming in on focus */
+  padding: 0.6rem 0.75rem;
+  min-height: 44px;
+  width: 100%;
+  border: 1px solid var(--border-default);
+  border-radius: var(--radius);
+  background: var(--bg-secondary);
+  color: var(--text-primary);
+}
+
+.field textarea {
+  min-height: 6rem;
+  resize: vertical; /* can be made taller, but not wider */
+}
+
+.field input:focus,
+.field select:focus,
+.field textarea:focus {
+  outline: 2px solid var(--action-primary);
+  outline-offset: 1px;
+}
+
+.field [aria-invalid='true'] {
+  border-color: var(--danger);
+}
+
+.field-hint {
+  color: var(--text-secondary);
+  font-size: 0.875rem;
+  margin: 0;
+}
+
+.field-error {
+  color: var(--danger);
+  font-size: 0.875rem;
+  margin: 0;
+}
+
+.form-error {
+  color: var(--danger);
+  background: var(--danger-bg);
+  border-radius: var(--radius);
+  padding: 0.6rem 0.75rem;
+  margin: 0 0 1rem;
+}
+
+/* On a phone the two fields stack; from 480px wide they sit side by side. */
+.field-row {
+  display: flex;
+  flex-direction: column;
+}
+
+@media (min-width: 480px) {
+  .field-row {
+    flex-direction: row;
+    gap: 0.75rem;
+  }
+}
+
+/* ---------- login / register ---------- */
+.auth-page {
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 1rem;
+}
+
+.auth-card {
+  width: 100%;
+  max-width: 420px;
+}
+
+.auth-card .brand {
+  font-size: 2rem;
+}
+
+.switch-link {
+  text-align: center;
+  margin: 1rem 0 0;
+}
+
+/* ---------- logged-in pages ---------- */
+.app-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  padding: 0.5rem 1rem;
+  background: var(--bg-secondary);
+  border-bottom: 1px solid var(--border-default);
+}
+
+.header-user {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.page {
+  max-width: 960px;
+  margin: 0 auto;
+  padding: 1.25rem 1rem 3rem;
+}
+
+.page-status {
+  text-align: center;
+  color: var(--text-secondary);
+  padding: 3rem 1rem;
+}
+
+/* The title of a page with a button next to it (e.g. "My Events" + "New event"). */
+.page-header {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+  margin-bottom: 1rem;
+}
+
+.page-header h1 {
+  margin: 0;
+}
+
+.back-link {
+  display: inline-block;
+  margin-bottom: 0.75rem;
+  font-weight: 600;
+  text-decoration: none;
+}
+
+/* A narrower column for forms, so lines don't get too long on a laptop. */
+.narrow {
+  max-width: 640px;
+}
+
+/* ---------- filter tabs (Active / Completed / Cancelled) ---------- */
+.tabs {
+  display: flex;
+  gap: 0.5rem;
+  margin-bottom: 1rem;
+  overflow-x: auto; /* scroll sideways instead of squashing on a tiny phone */
+}
+
+.tab {
+  padding: 0.45rem 0.9rem;
+  min-height: 40px;
+  display: inline-flex;
+  align-items: center;
+  border-radius: 999px; /* fully rounded "pill" */
+  background: var(--bg-tertiary);
+  color: var(--text-secondary);
+  font-weight: 600;
+  text-decoration: none;
+  white-space: nowrap;
+}
+
+/* aria-current="page" marks the selected tab, for screen readers AND for styling. */
+.tab[aria-current='page'] {
+  background: var(--bg-brand-subtle);
+  color: var(--text-brand);
+}
+
+/* ---------- event cards ---------- */
+.event-list {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  display: grid;
+  gap: 0.75rem;
+}
+
+/* Two columns from tablet width. */
+@media (min-width: 720px) {
+  .event-list {
+    grid-template-columns: 1fr 1fr;
+  }
+}
+
+/* The whole card is one link, so it's easy to tap. */
+.event-card {
+  display: block;
+  height: 100%;
+  padding: 1rem 1.1rem;
+  color: inherit;
+  text-decoration: none;
+  border-left: 4px solid var(--bg-brand); /* a teal stripe on the left */
+}
+
+.event-card:hover {
+  border-color: var(--border-strong);
+  border-left-color: var(--bg-brand);
+}
+
+.event-card-top {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 0.5rem;
+}
+
+.event-card h2 {
+  margin: 0 0 0.25rem;
+}
+
+.event-card p {
+  margin: 0.15rem 0;
+}
+
+.empty-state {
+  text-align: center;
+  padding: 2.5rem 1.25rem;
+}
+
+.empty-state p {
+  margin: 0 0 1rem;
+}
+
+/* ---------- badges ---------- */
+.badge {
+  display: inline-block;
+  padding: 0.1rem 0.6rem;
+  border-radius: 999px;
+  font-size: 0.8rem;
+  font-weight: 700;
+  white-space: nowrap;
+}
+
+.badge.active {
+  background: var(--bg-brand-subtle);
+  color: var(--text-brand);
+}
+
+.badge.completed {
+  background: var(--bg-tertiary);
+  color: var(--text-secondary);
+}
+
+.badge.cancelled {
+  background: var(--danger-bg);
+  color: var(--danger);
+}
+
+.badge.today {
+  background: var(--accent);
+  color: var(--accent-text);
+}
+
+/* ---------- event details ---------- */
+.event-title {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.5rem;
+  margin-bottom: 1rem;
+}
+
+.event-title h1 {
+  margin: 0;
+}
+
+/* <dl> = "description list": pairs of a term (dt) and its value (dd). */
+.detail-list {
+  display: grid;
+  grid-template-columns: max-content 1fr;
+  gap: 0.5rem 1rem;
+  margin: 0 0 1.25rem;
+}
+
+.detail-list dt {
+  font-weight: 600;
+  color: var(--text-secondary);
+}
+
+.detail-list dd {
+  margin: 0;
+  white-space: pre-line; /* keep the line breaks typed in the description */
+}
+
+.section {
+  margin-top: 1rem;
+}
+
+
+/* ---------- players (step 3) ---------- */
+
+/* A heading with a small number next to it: "Players  12". */
+.section-header {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.section-header h2 {
+  margin: 0;
+}
+
+.count-pill {
+  min-width: 1.75rem;
+  padding: 0.05rem 0.55rem;
+  border-radius: 999px;
+  background: var(--accent); /* the yellow accent: a small, cheerful highlight */
+  color: var(--accent-text);
+  font-weight: 700;
+  font-size: 0.85rem;
+  text-align: center;
+}
+
+/* An input with its button(s) on the same line. */
+.inline-form {
+  display: flex;
+  gap: 0.5rem;
+}
+
+.inline-form input {
+  flex: 1;
+  min-width: 0; /* lets the input shrink on narrow phones instead of pushing the buttons out */
+}
+
+.inline-form .button {
+  flex: none;
+}
+
+/* The rename box isn't inside a .field, so it gets the same input look here. */
+.rename-form {
+  flex: 1;
+}
+
+.rename-form input {
+  font: inherit;
+  font-size: 1rem;
+  padding: 0.45rem 0.65rem;
+  min-height: 40px;
+  border: 1px solid var(--border-default);
+  border-radius: var(--radius);
+  background: var(--bg-secondary);
+  color: var(--text-primary);
+}
+
+.rename-form input:focus {
+  outline: 2px solid var(--action-primary);
+  outline-offset: 1px;
+}
+
+/* A smaller button for the rows of a list. Still 40px tall, so easy to tap. */
+.button.small {
+  min-height: 40px;
+  padding: 0.35rem 0.75rem;
+  font-size: 0.9rem;
+}
+
+.player-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.player-row {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 0.6rem 0;
+  border-top: 1px solid var(--border-subtle);
+}
+
+/* The round first-letter badge. */
+.avatar {
+  flex: none;
+  width: 2.25rem;
+  height: 2.25rem;
+  border-radius: 50%;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--bg-brand-subtle);
+  color: var(--text-brand);
+  font-weight: 700;
+}
+
+.player-name {
+  flex: 1;
+  min-width: 0;
+  overflow-wrap: anywhere; /* a very long name wraps instead of overflowing */
+  font-weight: 600;
+}
+
+.row-actions {
+  display: flex;
+  gap: 0.4rem;
+  flex: none;
+}
+
+
+/* ---------- courts (step 4) ---------- */
+
+/* Hidden on screen, but still read by screen readers (e.g. "Team A player 1"). */
+.visually-hidden {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+}
+
+/* A calm information box (not an error). */
+.notice {
+  background: var(--bg-tertiary);
+  color: var(--text-primary);
+  border-radius: var(--radius);
+  padding: 0.6rem 0.75rem;
+  margin: 0 0 1rem;
+}
+
+.courts-link {
+  margin-bottom: 1rem;
+  font-size: 1.05rem;
+  gap: 0.4rem;
+}
+
+/* One column on a phone, two from tablet width. */
+.court-grid {
+  display: grid;
+  gap: 0.75rem;
+  margin-bottom: 1rem;
+}
+
+@media (min-width: 720px) {
+  .court-grid {
+    grid-template-columns: 1fr 1fr;
+  }
+}
+
+/* The colored stripe on the left says the court's state at a glance. */
+.court-card {
+  border-left: 4px solid var(--border-strong);
+  padding: 1rem 1.1rem;
+}
+
+.court-card.scheduled {
+  border-left-color: var(--bg-brand);
+}
+
+.court-card.playing {
+  border-left-color: var(--accent);
+}
+
+.court-header {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin-bottom: 0.75rem;
+}
+
+.court-header h2 {
+  margin: 0;
+}
+
+.court-played {
+  margin-left: auto; /* pushes it to the right edge */
+  font-size: 0.875rem;
+}
+
+.badge.court-free {
+  background: var(--bg-tertiary);
+  color: var(--text-secondary);
+}
+
+.badge.court-scheduled {
+  background: var(--bg-brand-subtle);
+  color: var(--text-brand);
+}
+
+.badge.court-playing {
+  background: var(--accent);
+  color: var(--accent-text);
+}
+
+/* Team A  vs  Team B, side by side (they fit even on a phone). */
+.matchup {
+  display: grid;
+  grid-template-columns: 1fr auto 1fr;
+  align-items: center;
+  gap: 0.5rem;
+  margin-bottom: 0.75rem;
+}
+
+.team {
+  background: var(--bg-primary);
+  border-radius: var(--radius);
+  padding: 0.5rem 0.65rem;
+}
+
+.team-label {
+  display: block;
+  font-size: 0.75rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: var(--text-secondary);
+}
+
+.team-players {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  font-weight: 600;
+  overflow-wrap: anywhere;
+}
+
+.versus {
+  font-weight: 800;
+  color: var(--text-brand);
+}
+
+.auto-tag {
+  margin-left: 0.35rem;
+  padding: 0 0.35rem;
+  border-radius: 999px;
+  background: var(--bg-tertiary);
+  color: var(--text-secondary);
+  font-size: 0.7rem;
+  font-weight: 600;
+  vertical-align: middle;
+}
+
+/* The line-up picker: Team A and Team B side by side from 480px. */
+.lineup-teams {
+  display: grid;
+  gap: 0.5rem;
+}
+
+@media (min-width: 480px) {
+  .lineup-teams {
+    grid-template-columns: 1fr 1fr;
+  }
+}
+
+.lineup-team {
+  border: 1px solid var(--border-default);
+  border-radius: var(--radius);
+  margin: 0;
+  padding: 0.5rem 0.75rem 0;
+}
+
+.lineup-team legend {
+  font-weight: 700;
+  padding: 0 0.25rem;
+}
+
+.lineup-team .field {
+  margin-bottom: 0.5rem;
+}
+
+.lineup-picker .field-hint {
+  margin: 0.5rem 0 0.75rem;
+}
+
+/* "Next up" */
+.queue-list {
+  list-style: none;
+  margin: 0.75rem 0 0;
+  padding: 0;
+}
+
+.queue-row {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 0.5rem 0;
+  border-top: 1px solid var(--border-subtle);
+}
+
+.queue-position {
+  flex: none;
+  width: 1.75rem;
+  height: 1.75rem;
+  border-radius: 50%;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--bg-tertiary);
+  color: var(--text-secondary);
+  font-weight: 700;
+  font-size: 0.85rem;
+}
+
+/* The first four (likely next on court) get the teal circle. */
+.queue-row.next .queue-position {
+  background: var(--bg-brand-subtle);
+  color: var(--text-brand);
+}
+
+.queue-detail {
+  flex: none;
+  font-size: 0.85rem;
+}
+
+
+/* ---------- court screen / scoring (step 5) ---------- */
+
+/* One narrow column: the phone is held in one hand at the court. */
+.scoreboard {
+  max-width: 560px;
+  margin: 0 auto;
+}
+
+/* "Game 1 21–18" chips for best of three. */
+.game-chips {
+  list-style: none;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.4rem;
+  margin: 0 0 1rem;
+  padding: 0;
+}
+
+.game-chip {
+  background: var(--bg-tertiary);
+  border-radius: 999px;
+  padding: 0.15rem 0.7rem;
+  font-size: 0.875rem;
+}
+
+/* "Change ends!": big and yellow, so nobody misses it. */
+.change-ends {
+  background: var(--accent);
+  color: var(--accent-text);
+  border-radius: var(--radius);
+  padding: 0.75rem 1rem;
+  margin: 0 0 1rem;
+  font-weight: 800;
+  font-size: 1.1rem;
+  text-align: center;
+}
+
+.tap-hint {
+  text-align: center;
+  margin: 0 0 0.5rem;
+}
+
+/* The two big score buttons, side by side. */
+.score-buttons {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0.75rem;
+  margin-bottom: 1rem;
+}
+
+.score-button {
+  font: inherit;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.15rem;
+  padding: 1rem 0.5rem;
+  min-height: 11rem; /* a big target: easy to hit without looking closely */
+  border: 2px solid var(--border-default);
+  border-radius: calc(var(--radius) * 1.5);
+  background: var(--bg-secondary);
+  color: var(--text-primary);
+  cursor: pointer;
+  box-shadow: var(--shadow);
+  touch-action: manipulation; /* no double-tap-to-zoom delay on phones */
+}
+
+.score-button:active:not(:disabled) {
+  transform: scale(0.97); /* a little "press" feeling */
+}
+
+.score-button:disabled {
+  opacity: 0.7;
+  cursor: wait;
+}
+
+/* The serving team's button gets the teal border. */
+.score-button.serving {
+  border-color: var(--action-primary);
+}
+
+.score-team {
+  font-size: 0.8rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: var(--text-secondary);
+}
+
+.score-value {
+  font-size: 4rem;
+  font-weight: 800;
+  line-height: 1.1;
+  font-variant-numeric: tabular-nums; /* all digits the same width: no jumping */
+}
+
+.score-names {
+  font-weight: 600;
+  text-align: center;
+  overflow-wrap: anywhere;
+}
+
+.score-serving {
+  margin-top: 0.25rem;
+  padding: 0 0.6rem;
+  border-radius: 999px;
+  background: var(--bg-brand-subtle);
+  color: var(--text-brand);
+  font-size: 0.75rem;
+  font-weight: 700;
+}
+
+/* The court picture: two halves with the net between them. */
+.court-diagram {
+  background: var(--bg-brand);
+  border-radius: var(--radius);
+  padding: 0.5rem;
+  margin-bottom: 1rem;
+}
+
+.court-half-label {
+  display: block;
+  text-align: center;
+  font-size: 0.75rem;
+  font-weight: 700;
+  color: var(--text-inverse);
+  margin: 0.15rem 0;
+}
+
+.service-courts {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0.35rem;
+}
+
+.service-court {
+  background: var(--bg-secondary);
+  border: 2px solid transparent;
+  border-radius: calc(var(--radius) / 1.5);
+  padding: 0.5rem;
+  min-height: 4.5rem;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+}
+
+.service-court.serving {
+  background: var(--accent);
+  color: var(--accent-text);
+}
+
+.service-court.receiving {
+  border-color: var(--accent);
+}
+
+.service-court-side {
+  font-size: 0.7rem;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  opacity: 0.75;
+}
+
+.service-court-player {
+  font-weight: 700;
+  overflow-wrap: anywhere;
+}
+
+.service-court-role {
+  font-size: 0.75rem;
+  font-weight: 600;
+}
+
+.net {
+  margin: 0.4rem 0;
+  border-top: 3px dashed var(--bg-secondary);
+  text-align: center;
+  line-height: 0;
+}
+
+.net span {
+  background: var(--bg-brand);
+  color: var(--text-inverse);
+  padding: 0 0.4rem;
+  font-size: 0.7rem;
+  font-weight: 700;
+  text-transform: uppercase;
+}
+
+/* "Who serves first?" */
+.start-game h2 {
+  margin-bottom: 0.75rem;
+}
+
+.start-game .field-hint {
+  margin: 0 0 1rem;
+}
+
+.team-choice {
+  border: 0;
+  margin: 0 0 1rem;
+  padding: 0;
+  display: grid;
+  gap: 0.5rem;
+}
+
+.team-choice legend {
+  font-weight: 600;
+  margin-bottom: 0.4rem;
+}
+
+.choice {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  min-height: 48px;
+  padding: 0.5rem 0.75rem;
+  border: 1px solid var(--border-default);
+  border-radius: var(--radius);
+  cursor: pointer;
+}
+
+.choice.selected {
+  border-color: var(--action-primary);
+  background: var(--bg-brand-subtle);
+}
+
+.choice input {
+  width: 1.15rem;
+  height: 1.15rem;
+  accent-color: var(--action-primary);
+}
+
+/* "Team A wins! 🏆" */
+.winner-card {
+  text-align: center;
+}
+
+.winner-card p {
+  margin: 0 0 0.5rem;
+}
+
+.winner-title {
+  font-size: 1.5rem;
+  font-weight: 800;
+  color: var(--text-brand);
+}
+
+.undo-button {
+  margin-top: 0.75rem;
+}
+
+
+/* ---------- stats (step 6) ---------- */
+
+/* The event page's links. CHANGED in step 7: "Open courts" on its own row
+   (the main thing to do), then "Stats" and "Expenses" side by side. */
+.event-links {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0.5rem;
+  margin-bottom: 1rem;
+}
+
+.event-links .button.primary {
+  grid-column: 1 / -1; /* from the first column line to the last: the full width */
+}
+
+.event-links .courts-link {
+  margin-bottom: 0; /* the grid has the margin now */
+}
+
+/* A wide table can scroll sideways inside its card instead of stretching the page. */
+.table-scroll {
+  overflow-x: auto;
+}
+
+.standings {
+  width: 100%;
+  border-collapse: collapse; /* one line between cells, not two */
+  font-variant-numeric: tabular-nums; /* numbers line up in their columns */
+}
+
+.standings th,
+.standings td {
+  padding: 0.55rem 0.4rem;
+  text-align: center;
+  border-bottom: 1px solid var(--border-subtle);
+  white-space: nowrap;
+}
+
+.standings thead th {
+  font-size: 0.75rem;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: var(--text-secondary);
+}
+
+/* <abbr> gets a dotted underline by default; the title still works without it. */
+.standings abbr {
+  text-decoration: none;
+}
+
+/* The player column takes the free space and reads left to right. */
+.standings .player-col {
+  text-align: left;
+  width: 100%;
+  white-space: normal;
+  overflow-wrap: anywhere;
+}
+
+.standings tbody th {
+  font-weight: 600;
+}
+
+/* The leaders: a yellow edge on the left of the row. */
+.standings tr.leader td:first-child {
+  box-shadow: inset 4px 0 0 var(--accent);
+  font-weight: 800;
+}
+
+.removed-tag {
+  font-weight: 400;
+  font-size: 0.85rem;
+}
+
+/* Big numbers in small boxes: 2 per row on a phone, more on wider screens. */
+.stat-tiles {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(8rem, 1fr));
+  gap: 0.5rem;
+  margin: 0 0 1rem;
+}
+
+.stat-tile {
+  background: var(--bg-tertiary);
+  border-radius: var(--radius);
+  padding: 0.6rem 0.75rem;
+}
+
+.stat-tile dt {
+  font-size: 0.8rem;
+  color: var(--text-secondary);
+}
+
+.stat-tile dd {
+  margin: 0;
+  font-size: 1.3rem;
+  font-weight: 800;
+  white-space: nowrap; /* "34 min" stays on one line */
+  font-variant-numeric: tabular-nums;
+}
+
+.result-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.result-row {
+  padding: 0.6rem 0;
+  border-bottom: 1px solid var(--border-subtle);
+}
+
+.result-row:last-child {
+  border-bottom: 0;
+}
+
+.result-row p {
+  margin: 0;
+}
+
+/* Two class names, so it wins over ".result-row p" above. */
+.result-row .result-detail {
+  font-size: 0.875rem;
+  margin-top: 0.15rem;
+}
+
+
+/* ---------- expenses (step 7) ---------- */
+
+/* The sum: "Total spent ... ₱1,200.00" lines, amounts on the right. */
+.money-sum {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  row-gap: 0.35rem; /* no column gap, so the line above "Split equally" has no hole */
+  margin: 0 0 1rem;
+  font-variant-numeric: tabular-nums;
+}
+
+.money-sum dd {
+  margin: 0;
+  padding-left: 1rem;
+  text-align: right;
+}
+
+/* The last line ("Split equally") gets a line above it, like a sum on paper. */
+.money-sum .money-sum-total {
+  border-top: 1px solid var(--border-default);
+  padding-top: 0.35rem;
+  font-weight: 700;
+}
+
+/* "₱150.00 each, for 8 players": the number people ask about, so it's big. */
+.equal-share {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 0.4rem;
+  background: var(--bg-brand-subtle);
+  border-radius: var(--radius);
+  padding: 0.75rem 1rem;
+  margin: 0 0 1rem;
+}
+
+.equal-share-amount {
+  font-size: 1.75rem;
+  font-weight: 800;
+  color: var(--text-brand);
+  font-variant-numeric: tabular-nums;
+}
+
+/* Expense and contribution rows. */
+.money-list {
+  list-style: none;
+  margin: 1rem 0 0;
+  padding: 0;
+}
+
+.money-row {
+  padding: 0.75rem 0;
+  border-top: 1px solid var(--border-subtle);
+}
+
+.money-main {
+  display: flex;
+  justify-content: space-between;
+  gap: 0.75rem;
+}
+
+.money-title {
+  font-weight: 600;
+  overflow-wrap: anywhere;
+}
+
+.money-amount {
+  font-weight: 700;
+  white-space: nowrap;
+  font-variant-numeric: tabular-nums;
+}
+
+.money-row .money-detail {
+  margin: 0.15rem 0 0.5rem;
+  font-size: 0.875rem;
+}
+
+/* The add / edit forms: a soft box, so it's clear what's being edited. */
+.money-form {
+  background: var(--bg-tertiary);
+  border-radius: var(--radius);
+  padding: 0.75rem;
+  margin-bottom: 0.5rem;
+}
+
+.money-form .field input,
+.money-form .field select {
+  background: var(--bg-secondary);
+}
+
+/* A checkbox with its text: the whole line can be tapped. */
+.check-field {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.6rem;
+  min-height: 44px;
+  padding: 0.35rem 0;
+  cursor: pointer;
+  flex: 1;
+}
+
+.check-field input {
+  width: 1.25rem;
+  height: 1.25rem;
+  margin-top: 0.15rem;
+  flex: none;
+  accent-color: var(--action-primary);
+}
+
+.check-field .field-hint {
+  display: block;
+}
+
+.money-form .check-field {
+  margin-bottom: 1rem;
+}
+
+.sharing-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.sharing-row {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  border-top: 1px solid var(--border-subtle);
+  padding: 0.25rem 0;
+}
+
+/* Settle up: one block per person who receives money. */
+.receiver-list,
+.payment-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.receiver {
+  padding: 0.6rem 0;
+  border-top: 1px solid var(--border-subtle);
+}
+
+.receiver:first-child {
+  border-top: 0;
+}
+
+.receiver-title {
+  margin: 0 0 0.25rem;
+}
+
+.payment {
+  display: flex;
+  justify-content: space-between;
+  gap: 0.75rem;
+  padding: 0.15rem 0 0.15rem 1rem;
+  color: var(--text-secondary);
+}
+
+/* "Everyone's numbers": a <details> box. Its <summary> is the clickable line. */
+.balances {
+  margin-top: 1rem;
+}
+
+.balances summary {
+  cursor: pointer;
+  font-weight: 600;
+  color: var(--text-brand);
+  min-height: 44px;
+  display: flex;
+  align-items: center;
+}
+
+.balance-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-variant-numeric: tabular-nums;
+  margin-bottom: 0.5rem;
+}
+
+.balance-table th,
+.balance-table td {
+  padding: 0.5rem 0.4rem;
+  text-align: right;
+  border-bottom: 1px solid var(--border-subtle);
+  white-space: nowrap;
+}
+
+.balance-table thead th {
+  font-size: 0.75rem;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: var(--text-secondary);
+}
+
+.balance-table .player-col {
+  text-align: left;
+  width: 100%;
+  white-space: normal;
+  overflow-wrap: anywhere;
+}
+
+.balance-plus {
+  color: var(--text-brand);
+  font-weight: 700;
+}
+
+.balance-minus {
+  color: var(--danger);
+  font-weight: 700;
 }
