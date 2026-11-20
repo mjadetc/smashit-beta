@@ -22,7 +22,7 @@ const CONFIRMATIONS = {
 };
 
 // /events/5: the event's details and what the organizer can do with it.
-// Step 3 added Players, step 4 the "Open courts" button; steps 6-7 add Stats and Expenses.
+// Step 3 added Players, step 4 the "Open courts" button, step 6 "Stats"; step 7 adds Expenses.
 export default function EventPage() {
   const { eventId } = useParams();
   const navigate = useNavigate();
@@ -92,11 +92,15 @@ export default function EventPage() {
       </div>
 
       
-      {/* NEW in step 4: the main thing to do at the venue, so it comes first.
-          The emoji is decoration only (aria-hidden), the text says it all. */}
-      <Link to={`/events/${event.id}/courts`} className="button primary wide courts-link">
-        <span aria-hidden="true">🏸</span> Open courts
-      </Link>
+      {/* NEW in step 6: the two places to go, side by side: courts (main) and stats. */}
+      <div className="event-links">
+        <Link to={`/events/${event.id}/courts`} className="button primary courts-link">
+          <span aria-hidden="true">🏸</span> Open courts
+        </Link>
+        <Link to={`/events/${event.id}/stats`} className="button courts-link">
+          <span aria-hidden="true">📊</span> Stats
+        </Link>
+      </div>
 
       <div className="card">
         <dl className="detail-list">

@@ -1073,3 +1073,124 @@ a {
 .undo-button {
   margin-top: 0.75rem;
 }
+
+
+/* ---------- stats (step 6) ---------- */
+
+/* "Open courts" and "Stats" side by side on the event page. Courts gets more room. */
+.event-links {
+  display: grid;
+  grid-template-columns: 2fr 1fr;
+  gap: 0.5rem;
+  margin-bottom: 1rem;
+}
+
+.event-links .courts-link {
+  margin-bottom: 0; /* the grid has the margin now */
+}
+
+/* A wide table can scroll sideways inside its card instead of stretching the page. */
+.table-scroll {
+  overflow-x: auto;
+}
+
+.standings {
+  width: 100%;
+  border-collapse: collapse; /* one line between cells, not two */
+  font-variant-numeric: tabular-nums; /* numbers line up in their columns */
+}
+
+.standings th,
+.standings td {
+  padding: 0.55rem 0.4rem;
+  text-align: center;
+  border-bottom: 1px solid var(--border-subtle);
+  white-space: nowrap;
+}
+
+.standings thead th {
+  font-size: 0.75rem;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: var(--text-secondary);
+}
+
+/* <abbr> gets a dotted underline by default; the title still works without it. */
+.standings abbr {
+  text-decoration: none;
+}
+
+/* The player column takes the free space and reads left to right. */
+.standings .player-col {
+  text-align: left;
+  width: 100%;
+  white-space: normal;
+  overflow-wrap: anywhere;
+}
+
+.standings tbody th {
+  font-weight: 600;
+}
+
+/* The leaders: a yellow edge on the left of the row. */
+.standings tr.leader td:first-child {
+  box-shadow: inset 4px 0 0 var(--accent);
+  font-weight: 800;
+}
+
+.removed-tag {
+  font-weight: 400;
+  font-size: 0.85rem;
+}
+
+/* Big numbers in small boxes: 2 per row on a phone, more on wider screens. */
+.stat-tiles {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(8rem, 1fr));
+  gap: 0.5rem;
+  margin: 0 0 1rem;
+}
+
+.stat-tile {
+  background: var(--bg-tertiary);
+  border-radius: var(--radius);
+  padding: 0.6rem 0.75rem;
+}
+
+.stat-tile dt {
+  font-size: 0.8rem;
+  color: var(--text-secondary);
+}
+
+.stat-tile dd {
+  margin: 0;
+  font-size: 1.3rem;
+  font-weight: 800;
+  white-space: nowrap; /* "34 min" stays on one line */
+  font-variant-numeric: tabular-nums;
+}
+
+.result-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.result-row {
+  padding: 0.6rem 0;
+  border-bottom: 1px solid var(--border-subtle);
+}
+
+.result-row:last-child {
+  border-bottom: 0;
+}
+
+.result-row p {
+  margin: 0;
+}
+
+/* Two class names, so it wins over ".result-row p" above. */
+.result-row .result-detail {
+  font-size: 0.875rem;
+  margin-top: 0.15rem;
+}

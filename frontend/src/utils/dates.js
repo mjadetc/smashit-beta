@@ -75,8 +75,8 @@ export function formatTime(isoText) {
 }
 
 
-// 2040 seconds -> "34 min". Under a minute -> "less than a minute".
+// 2040 seconds -> "34 min". Under a minute -> "under 1 min" (short, so it fits in a stats tile).
 export function formatDuration(seconds) {
   const minutes = Math.round(seconds / 60);
-  return minutes < 1 ? 'less than a minute' : `${minutes} min`;
+  return minutes < 1 ? 'under 1 min' : `${minutes} min`;
 }
