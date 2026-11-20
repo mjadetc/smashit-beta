@@ -40,5 +40,14 @@ class SessionCookieConfigTest {
                         "server.servlet.session.cookie.same-site"
                 )
         );
+
+        
+        // NEW in step 8: an organizer stays logged in through a long evening.
+        assertEquals(
+                "12h",
+                environment.getProperty(
+                        "server.servlet.session.timeout"
+                )
+        );
     }
 }

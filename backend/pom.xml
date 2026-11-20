@@ -92,6 +92,13 @@
 			<groupId>org.springframework.boot</groupId>
 			<artifactId>spring-boot-starter-security</artifactId>
 		</dependency>
+		<!-- NEW in step 8: keeps login sessions in PostgreSQL instead of the server's
+		     memory, so a restart (a redeploy, or Render's free plan waking up after a
+		     sleep) doesn't log everyone out. -->
+		<dependency>
+			<groupId>org.springframework.boot</groupId>
+			<artifactId>spring-boot-starter-session-jdbc</artifactId>
+		</dependency>
 	</dependencies>
 
 	<build>

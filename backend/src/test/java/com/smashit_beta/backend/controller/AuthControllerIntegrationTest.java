@@ -7,6 +7,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.webmvc.test.autoconfigure.AutoConfigureMockMvc;
 import org.springframework.http.MediaType;
+import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.mock.web.MockHttpSession;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.MvcResult;
@@ -14,6 +15,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.util.UUID;
 
+import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
@@ -37,6 +39,10 @@ class AuthControllerIntegrationTest {
     // The fake browser.
     @Autowired
     private MockMvc mockMvc;
+
+    // NEW in step 8: plain SQL access, to look inside Spring Session's table.
+    @Autowired
+    private JdbcTemplate jdbcTemplate;
 
     // ---------- helper methods ----------
 
@@ -80,8 +86,9 @@ class AuthControllerIntegrationTest {
         return email;
     }
 
-    // Logs in and returns the HTTP session, which plays the role of the browser's JSESSIONID cookie.
-    private MockHttpSession login(Cookie csrf, String email, String password) throws Exception {
+    // Logs in and returns the SESSION cookie, like the browser keeps it.
+    // CHANGED in step 8: Spring Session finds the session by this cookie.
+    private Cookie login(Cookie csrf, String email, String password) throws Exception {
         MvcResult result = mockMvc.perform(post("/api/auth/login")
                         .cookie(csrf)
                         .header("X-XSRF-TOKEN", csrf.getValue())
@@ -93,7 +100,10 @@ class AuthControllerIntegrationTest {
                 .andExpect(jsonPath("$.email").value(email))
                 .andReturn();
 
-        return (MockHttpSession) result.getRequest().getSession(false);
+        Cookie sessionCookie = result.getResponse().getCookie("SESSION");
+
+        assertNotNull(sessionCookie, "Expected the SESSION cookie to be set");
+        return sessionCookie;
     }
 
     // ---------- tests ----------
@@ -165,12 +175,26 @@ class AuthControllerIntegrationTest {
         Cookie csrf = fetchCsrfCookie();
         String email = registerUser(csrf, "SmashHit123!");
 
-        MockHttpSession session = login(csrf, email, "SmashHit123!");
+        Cookie session = login(csrf, email, "SmashHit123!");
 
-        // Sending the session proves the login was remembered between requests.
-        mockMvc.perform(get("/api/auth/me").session(session))
+        // Sending the session cookie proves the login was remembered between requests.
+        mockMvc.perform(get("/api/auth/me").cookie(session))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.email").value(email));
+    }
+
+    // NEW in step 8: the login is stored in PostgreSQL, so it survives a server restart.
+    @Test
+    void shouldStoreTheLoginSessionInTheDatabase() throws Exception {
+        Cookie csrf = fetchCsrfCookie();
+        String email = registerUser(csrf, "SmashHit123!");
+
+        login(csrf, email, "SmashHit123!");
+
+        // Spring Session writes who is logged in into PRINCIPAL_NAME.
+        Integer sessions = jdbcTemplate.queryForObject(
+                "SELECT COUNT(*) FROM spring_session WHERE principal_name = ?", Integer.class, email);
+        assertEquals(1, sessions);
     }
 
     @Test
@@ -199,16 +223,15 @@ class AuthControllerIntegrationTest {
     void shouldLogout() throws Exception {
         Cookie csrf = fetchCsrfCookie();
         String email = registerUser(csrf, "SmashHit123!");
-        MockHttpSession session = login(csrf, email, "SmashHit123!");
+        Cookie session = login(csrf, email, "SmashHit123!");
 
         mockMvc.perform(post("/api/auth/logout")
-                        .session(session)
-                        .cookie(csrf)
+                        .cookie(session, csrf)
                         .header("X-XSRF-TOKEN", csrf.getValue()))
                 .andExpect(status().isNoContent());
 
-        // After logout, the old session no longer counts as logged in.
-        mockMvc.perform(get("/api/auth/me").session(session))
+        // After logout, the old session cookie no longer counts as logged in.
+        mockMvc.perform(get("/api/auth/me").cookie(session))
                 .andExpect(status().isUnauthorized());
     }
 }
