@@ -11,6 +11,7 @@ import NewEventPage from './pages/NewEventPage.jsx';
 import NotFoundPage from './pages/NotFoundPage.jsx';
 import RegisterPage from './pages/RegisterPage.jsx';
 import CourtsPage from './pages/CourtsPage.jsx';
+import ScoreboardPage from './pages/ScoreboardPage.jsx';
 
 // The app's pages, by URL. Each <Route> says "at this path, show this component".
 // The router itself (<BrowserRouter>) is added in main.jsx, so the tests can use a
@@ -38,6 +39,8 @@ export default function App() {
           <Route path="/events/:eventId/edit" element={<EditEventPage />} />
           {/* The live courts screen. */}
           <Route path="/events/:eventId/courts" element={<CourtsPage />} />
+          {/* NEW in step 5: the court screen for scoring one match. */}
+          <Route path="/events/:eventId/matches/:matchId" element={<ScoreboardPage />} />
         </Route>
 
         {/* "*" = any other URL. */}

@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { Link } from 'react-router';
 
 import {
   cancelMatch,
@@ -31,7 +32,7 @@ function TeamNames({ label, seats }) {
 // One court on the Courts page. It shows one of three states:
 //   free        -> "Auto-pick players" or "Choose players"
 //   SCHEDULED   -> the line-up, with Start / Reshuffle / Change line-up / Cancel
-//   IN_PROGRESS -> who is playing, with Cancel
+//   IN_PROGRESS -> who is playing, with Score match / Cancel
 // Props:
 //   eventId, courtNumber
 //   match       = the court's unfinished match, or null when the court is free
@@ -110,9 +111,7 @@ export default function CourtCard({ eventId, courtNumber, match, playedCount, fr
       )}
 
       {status === 'IN_PROGRESS' && !picker && (
-        <p className="muted">
-          Started at {formatTime(match.startedAt)}. Live scoring is coming next.
-        </p>
+        <p className="muted">Started at {formatTime(match.startedAt)}.</p>
       )}
       {status === 'FREE' && !picker && <p className="muted">Ready for the next match.</p>}
 
@@ -177,6 +176,14 @@ export default function CourtCard({ eventId, courtNumber, match, playedCount, fr
               </button>
             </>
           )}
+
+          {/* NEW in step 5: open the court screen to score the match. */}
+          {status === 'IN_PROGRESS' && (
+            <Link to={`/events/${eventId}/matches/${match.id}`} className="button primary">
+              Score match
+            </Link>
+          )}
+
 
           {match && (
             <button type="button" className="button danger" disabled={busy} onClick={handleCancelMatch}>

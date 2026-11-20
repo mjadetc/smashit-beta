@@ -72,7 +72,9 @@ describe('Courts page', () => {
     expect(within(court(1)).getByRole('button', { name: 'Auto-pick players' })).toBeInTheDocument();
     // Court 2 is playing. Leo was picked by the app ("auto"), Ana by the organizer.
     expect(within(court(2)).getByText('Playing')).toBeInTheDocument();
-    expect(within(court(2)).getByText('Started at 7:30 PM. Live scoring is coming next.')).toBeInTheDocument();
+    expect(within(court(2)).getByText('Started at 7:30 PM.')).toBeInTheDocument();
+    // NEW in step 5: the way to the court screen.
+    expect(within(court(2)).getByRole('link', { name: 'Score match' })).toHaveAttribute('href', '/events/5/matches/31');
     expect(within(court(2)).getByText('Ana')).not.toHaveTextContent('auto');
     expect(within(court(2)).getByText('Leo')).toHaveTextContent('auto');
     // Next up, in the backend's order.

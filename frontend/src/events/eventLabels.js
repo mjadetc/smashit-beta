@@ -16,3 +16,9 @@ export const STATUS_LABELS = {
 export function courtsLabel(count) {
   return count === 1 ? '1 court' : `${count} courts`;
 }
+
+
+// A team's names, e.g. "Ana & Leo". `players` = seats or player refs (they all have playerName).
+export function teamName(players) {
+  return players.map((player) => player.playerName).join(' & ');
+}

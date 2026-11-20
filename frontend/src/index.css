@@ -819,3 +819,257 @@ a {
   flex: none;
   font-size: 0.85rem;
 }
+
+
+/* ---------- court screen / scoring (step 5) ---------- */
+
+/* One narrow column: the phone is held in one hand at the court. */
+.scoreboard {
+  max-width: 560px;
+  margin: 0 auto;
+}
+
+/* "Game 1 21–18" chips for best of three. */
+.game-chips {
+  list-style: none;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.4rem;
+  margin: 0 0 1rem;
+  padding: 0;
+}
+
+.game-chip {
+  background: var(--bg-tertiary);
+  border-radius: 999px;
+  padding: 0.15rem 0.7rem;
+  font-size: 0.875rem;
+}
+
+/* "Change ends!": big and yellow, so nobody misses it. */
+.change-ends {
+  background: var(--accent);
+  color: var(--accent-text);
+  border-radius: var(--radius);
+  padding: 0.75rem 1rem;
+  margin: 0 0 1rem;
+  font-weight: 800;
+  font-size: 1.1rem;
+  text-align: center;
+}
+
+.tap-hint {
+  text-align: center;
+  margin: 0 0 0.5rem;
+}
+
+/* The two big score buttons, side by side. */
+.score-buttons {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0.75rem;
+  margin-bottom: 1rem;
+}
+
+.score-button {
+  font: inherit;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.15rem;
+  padding: 1rem 0.5rem;
+  min-height: 11rem; /* a big target: easy to hit without looking closely */
+  border: 2px solid var(--border-default);
+  border-radius: calc(var(--radius) * 1.5);
+  background: var(--bg-secondary);
+  color: var(--text-primary);
+  cursor: pointer;
+  box-shadow: var(--shadow);
+  touch-action: manipulation; /* no double-tap-to-zoom delay on phones */
+}
+
+.score-button:active:not(:disabled) {
+  transform: scale(0.97); /* a little "press" feeling */
+}
+
+.score-button:disabled {
+  opacity: 0.7;
+  cursor: wait;
+}
+
+/* The serving team's button gets the teal border. */
+.score-button.serving {
+  border-color: var(--action-primary);
+}
+
+.score-team {
+  font-size: 0.8rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: var(--text-secondary);
+}
+
+.score-value {
+  font-size: 4rem;
+  font-weight: 800;
+  line-height: 1.1;
+  font-variant-numeric: tabular-nums; /* all digits the same width: no jumping */
+}
+
+.score-names {
+  font-weight: 600;
+  text-align: center;
+  overflow-wrap: anywhere;
+}
+
+.score-serving {
+  margin-top: 0.25rem;
+  padding: 0 0.6rem;
+  border-radius: 999px;
+  background: var(--bg-brand-subtle);
+  color: var(--text-brand);
+  font-size: 0.75rem;
+  font-weight: 700;
+}
+
+/* The court picture: two halves with the net between them. */
+.court-diagram {
+  background: var(--bg-brand);
+  border-radius: var(--radius);
+  padding: 0.5rem;
+  margin-bottom: 1rem;
+}
+
+.court-half-label {
+  display: block;
+  text-align: center;
+  font-size: 0.75rem;
+  font-weight: 700;
+  color: var(--text-inverse);
+  margin: 0.15rem 0;
+}
+
+.service-courts {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0.35rem;
+}
+
+.service-court {
+  background: var(--bg-secondary);
+  border: 2px solid transparent;
+  border-radius: calc(var(--radius) / 1.5);
+  padding: 0.5rem;
+  min-height: 4.5rem;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+}
+
+.service-court.serving {
+  background: var(--accent);
+  color: var(--accent-text);
+}
+
+.service-court.receiving {
+  border-color: var(--accent);
+}
+
+.service-court-side {
+  font-size: 0.7rem;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  opacity: 0.75;
+}
+
+.service-court-player {
+  font-weight: 700;
+  overflow-wrap: anywhere;
+}
+
+.service-court-role {
+  font-size: 0.75rem;
+  font-weight: 600;
+}
+
+.net {
+  margin: 0.4rem 0;
+  border-top: 3px dashed var(--bg-secondary);
+  text-align: center;
+  line-height: 0;
+}
+
+.net span {
+  background: var(--bg-brand);
+  color: var(--text-inverse);
+  padding: 0 0.4rem;
+  font-size: 0.7rem;
+  font-weight: 700;
+  text-transform: uppercase;
+}
+
+/* "Who serves first?" */
+.start-game h2 {
+  margin-bottom: 0.75rem;
+}
+
+.start-game .field-hint {
+  margin: 0 0 1rem;
+}
+
+.team-choice {
+  border: 0;
+  margin: 0 0 1rem;
+  padding: 0;
+  display: grid;
+  gap: 0.5rem;
+}
+
+.team-choice legend {
+  font-weight: 600;
+  margin-bottom: 0.4rem;
+}
+
+.choice {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  min-height: 48px;
+  padding: 0.5rem 0.75rem;
+  border: 1px solid var(--border-default);
+  border-radius: var(--radius);
+  cursor: pointer;
+}
+
+.choice.selected {
+  border-color: var(--action-primary);
+  background: var(--bg-brand-subtle);
+}
+
+.choice input {
+  width: 1.15rem;
+  height: 1.15rem;
+  accent-color: var(--action-primary);
+}
+
+/* "Team A wins! 🏆" */
+.winner-card {
+  text-align: center;
+}
+
+.winner-card p {
+  margin: 0 0 0.5rem;
+}
+
+.winner-title {
+  font-size: 1.5rem;
+  font-weight: 800;
+  color: var(--text-brand);
+}
+
+.undo-button {
+  margin-top: 0.75rem;
+}

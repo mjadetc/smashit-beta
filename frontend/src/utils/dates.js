@@ -73,3 +73,10 @@ export function formatEventTime(startsAt, endsAt) {
 export function formatTime(isoText) {
   return clean(timeFormat.format(new Date(isoText)));
 }
+
+
+// 2040 seconds -> "34 min". Under a minute -> "less than a minute".
+export function formatDuration(seconds) {
+  const minutes = Math.round(seconds / 60);
+  return minutes < 1 ? 'less than a minute' : `${minutes} min`;
+}
