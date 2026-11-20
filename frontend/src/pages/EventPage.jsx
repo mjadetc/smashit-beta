@@ -22,7 +22,7 @@ const CONFIRMATIONS = {
 };
 
 // /events/5: the event's details and what the organizer can do with it.
-// Steps 4-7 add Players, Courts, Stats and Expenses to this page.
+// Step 3 added Players, step 4 the "Open courts" button; steps 6-7 add Stats and Expenses.
 export default function EventPage() {
   const { eventId } = useParams();
   const navigate = useNavigate();
@@ -91,6 +91,13 @@ export default function EventPage() {
         <StatusBadge status={event.status} />
       </div>
 
+      
+      {/* NEW in step 4: the main thing to do at the venue, so it comes first.
+          The emoji is decoration only (aria-hidden), the text says it all. */}
+      <Link to={`/events/${event.id}/courts`} className="button primary wide courts-link">
+        <span aria-hidden="true">🏸</span> Open courts
+      </Link>
+
       <div className="card">
         <dl className="detail-list">
           <dt>When</dt>
@@ -122,7 +129,8 @@ export default function EventPage() {
           {/* Active events can be edited, completed or cancelled... */}
           {isActive && (
             <>
-              <Link to={`/events/${event.id}/edit`} className="button primary">
+              {/* Not "primary" any more: "Open courts" is the main button now. */}
+              <Link to={`/events/${event.id}/edit`} className="button">
                 Edit
               </Link>
               <button

@@ -67,3 +67,9 @@ export function formatEventTime(startsAt, endsAt) {
     : `${dayFormat.format(end)} · ${timeFormat.format(end)}`;
   return clean(`${startText} – ${endText}`);
 }
+
+
+// "7:42 PM", for times during the event (e.g. when a match started).
+export function formatTime(isoText) {
+  return clean(timeFormat.format(new Date(isoText)));
+}
