@@ -23,17 +23,18 @@ public final class AuthTestHelper {
     private AuthTestHelper() {
     }
 
-    // A logged-in user as the tests see it: the session (= the login cookie)
+    // A logged-in user as the tests see it: the SESSION cookie (= the login)
     // and the CSRF cookie needed for POST/PUT/DELETE.
     // A record is perfect for bundling a few values together.
-    public record LoggedInUser(String email, MockHttpSession session, Cookie csrfCookie) {
+    // CHANGED in step 8: sessions are kept by Spring Session (in PostgreSQL), which finds
+    // them by the SESSION cookie, so the tests send that cookie, exactly like a browser.
+    public record LoggedInUser(String email, Cookie sessionCookie, Cookie csrfCookie) {
 
-        // Adds the session + CSRF cookie + CSRF header to any request.
+        // Adds the session cookie + CSRF cookie + CSRF header to any request.
         // Usage: mockMvc.perform(user.authorize(post("/api/events")) ...)
         public MockHttpServletRequestBuilder authorize(MockHttpServletRequestBuilder request) {
             return request
-                    .session(session)
-                    .cookie(csrfCookie)
+                    .cookie(sessionCookie, csrfCookie)
                     .header("X-XSRF-TOKEN", csrfCookie.getValue());
         }
     }
@@ -77,8 +78,9 @@ public final class AuthTestHelper {
                 .andExpect(status().isOk())
                 .andReturn();
 
-        MockHttpSession session = (MockHttpSession) loginResult.getRequest().getSession(false);
+        // The login answer sets the SESSION cookie; we keep it like a browser would.
+        Cookie sessionCookie = loginResult.getResponse().getCookie("SESSION");
 
-        return new LoggedInUser(email, session, csrfCookie);
+        return new LoggedInUser(email, sessionCookie, csrfCookie);
     }
 }

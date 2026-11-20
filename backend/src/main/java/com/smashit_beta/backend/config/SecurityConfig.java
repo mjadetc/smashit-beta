@@ -1,6 +1,7 @@
 package com.smashit_beta.backend.config;
 
 import com.smashit_beta.backend.security.UserDetailsServiceImpl;
+import org.springframework.beans.factory.annotation.Value;
 
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -28,21 +29,28 @@ import org.springframework.web.cors.CorsConfiguration;
 import org.springframework.web.cors.CorsConfigurationSource;
 import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
 
+
 import java.util.List;
 
 @Configuration
 public class SecurityConfig {
 
     // Configure which frontend origins can communicate with this backend.
+    // CHANGED in step 8: the list comes from app.cors.allowed-origins in
+    // application.properties (Vite locally, the Vercel address on Render).
+    // @Value reads a setting; Spring splits "a,b" into a List for us.
+    //
+    // Why CORS still matters with Vercel's /api forwarding: the browser talks to Vercel
+    // only, but Vercel passes the browser's "Origin: https://...vercel.app" header on to
+    // Render. Spring sees that it differs from its own address and checks this list.
     @Bean
-    public CorsConfigurationSource corsConfigurationSource() {
+    public CorsConfigurationSource corsConfigurationSource(
+            @Value("${app.cors.allowed-origins}") List<String> allowedOrigins
+    ) {
 
         CorsConfiguration configuration = new CorsConfiguration();
 
-        // Vite's usual local development address.
-        configuration.setAllowedOrigins(
-                List.of("http://localhost:5173")
-        );
+        configuration.setAllowedOrigins(allowedOrigins);
 
         // Allow the HTTP methods our API will use.
         configuration.setAllowedMethods(
@@ -138,7 +146,9 @@ public class SecurityConfig {
             // Like any POST, it still requires the CSRF header.
             .logout(logout -> logout
                 .logoutUrl("/api/auth/logout")
-                .deleteCookies("JSESSIONID")
+                // CHANGED in step 8: Spring Session names its cookie SESSION
+                // (Tomcat's in-memory sessions used JSESSIONID).
+                .deleteCookies("SESSION")
                 // Reply "204 No Content" instead of redirecting to a login page
                 // (redirects make sense for server-rendered sites, not a React API).
                 .logoutSuccessHandler(

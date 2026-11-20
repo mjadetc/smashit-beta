@@ -111,7 +111,8 @@ public class AuthController {
 
         // 5. IMPORTANT: save it to the HTTP session. Without this line, the login
         //    is forgotten once this request ends, and /me would return 401.
-        //    This creates the JSESSIONID cookie the browser sends from now on.
+        //    This creates the SESSION cookie the browser sends from now on
+        //    (CHANGED in step 8: the session itself is stored in PostgreSQL by Spring Session).
         securityContextRepository.saveContext(context, request, response);
 
         // authenticated.getName() is the email (see UserDetailsServiceImpl).
